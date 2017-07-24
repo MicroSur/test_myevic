@@ -1,3 +1,5 @@
+//==============128x128 oled===========================================================
+
 #include "myevic.h"
 #include "dataflash.h"
 #include "timers.h"
