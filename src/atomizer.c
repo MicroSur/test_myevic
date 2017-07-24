@@ -10,9 +10,8 @@
 #include "miscs.h"
 #include "atomizer.h"
 
-//=========================================================================
-
-//=========================================================================
+/* declaration of uint8_t, uint16_t, uint32_t and uint64_t
+unsigned char, unsigned short, unsigned int and unsigned long long*/
 
 uint32_t	AtoVoltsADC;
 uint32_t	AtoVolts;
@@ -675,7 +674,7 @@ __myevic__ void CheckMode()
 
 
 //=========================================================================
-//----- (00003250) --------------------------------------------------------
+//----- (00003250) ---------------Reading atomizer routine(?)--------------
 __myevic__ void ReadAtomizer()
 {
 	uint32_t ADCShuntSum;
@@ -1264,7 +1263,7 @@ __myevic__ int SearchSMARTRez( uint16_t rez )
 
 
 //=========================================================================
-//----- (000038FC) --------------------------------------------------------
+//----- (000038FC) -------Routine to set atomizer smart parameters---------
 __myevic__ void SetAtoSMARTParams()
 {
 	int i, j, k;
@@ -1393,7 +1392,7 @@ __myevic__ void SetAtoLimits()
 
 
 //=========================================================================
-//----- (00006038) --------------------------------------------------------
+//----- (00006038) -------------Routine to poll atomizer status(?)---------
 __myevic__ void ProbeAtomizer()
 {
 	if ( ( ISVTCDUAL && ( BatteryStatus == 2 || !PA3 ) )
