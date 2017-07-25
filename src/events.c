@@ -384,6 +384,13 @@ StopFire();
 					break;
 
 				case 2:
+					AutoPuffTimer=6000;
+Event = EVENT_AUTO_PUFF;
+gFlags.autopuff=1;
+if ( Screen != 1 || !EditModeTimer || EditItemIndex != 4 )
+{
+Event = 1;	// fire
+}
 				case 3:
 				case 4:
                                 case 5:
