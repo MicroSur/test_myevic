@@ -1234,7 +1234,7 @@ __myevic__ int EvtEnterMenus()
 {
         CurrentMenu = 0;
 	CurrentMenuItem = 0;
-	SetScreen( 102, 30 );
+	SetScreen( 102, 15 );
 	return 1;
 }
 
@@ -1402,7 +1402,7 @@ __myevic__ int CustomEvents()
 			break;
                         
 		case 40:
-			SetScreen( 107, 30 );
+			SetScreen( 107, 15 );
 			EditModeTimer = 3000;
 			EditItemIndex = 0;
 			break;
