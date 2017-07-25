@@ -386,6 +386,7 @@ __myevic__ void StopFire()
 //	myprintf( "StopFire from 0x%08x\n", caller );
 
 	AutoPuffTimer = 0;
+	gFlags.autopuff = 0;
 	PreheatTimer = 0;
 
 	LowBatVolts = 0;
