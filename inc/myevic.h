@@ -153,6 +153,7 @@ typedef struct
 /* 00200000 */	int fading:1;
 /* 00400000 */	int led_on:1;
 /* 00800000 */	int splash:1;
+	int autopuff:1;
 /* 01000000 */	int	playing_tt:1;
 }
 
