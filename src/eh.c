@@ -572,6 +572,9 @@ __myevic__ void EventHandler()
                            
 			gFlags.firing = 1;
 			FireDuration = 0;
+			//AutoPuffTimer=2000;
+ 			//Event = EVENT_AUTO_PUFF;
+ 			gFlags.autopuff=1;
                         if ( Screen == 1 ) gFlags.FireNotFlipped = 1;
         
 			if ( BattProbeCount == 1 ) BattProbeCount = 2;

@@ -193,7 +193,7 @@ __myevic__ void GetUserInput()
 
 	if ( ( !PE0 || AutoPuffTimer ) && PD2 && PD3 )
 	{
-		if ( !PE0 ) AutoPuffTimer = 0;
+		if ( !PE0 && !gFlags.autopuff) AutoPuffTimer = 0;
 
 		if (( LastInputs == 5 ) || ( LastInputs == 6 ))
 			return;
@@ -202,11 +202,34 @@ __myevic__ void GetUserInput()
 	}
 	else
 	{
+		
+		/*trying to implement autopuff*/
+		if (gFlags.autopuff)
+ 			{
+ 				if ( LastInputs == 1 )
+ 					{
+ 						AutoPuffTimer = 0;
+ 						gFlags.autopuff = 0;
+ 						StopFire();
+ 					}
+ 			}
+		/*eof autopuff*/
+		
 		if ( gFlags.firing )
 		{
 			if ( LastInputs == 1 )
 			{
+				
 				StopFire();
+				/*trying to implement autopuff*/
+				if (gFlags.autopuff)
+{
+AutoPuffTimer = 0;
+gFlags.autopuff = 0;
+StopFire();
+}
+				/*eof*/
+				
 			}
 			gFlags.user_idle = 1;
 			LastInputs = -1;
@@ -361,6 +384,13 @@ __myevic__ void GetUserInput()
 					break;
 
 				case 2:
+					AutoPuffTimer=3000;
+Event = EVENT_AUTO_PUFF;
+gFlags.autopuff=1;
+if ( Screen != 1 || !EditModeTimer || EditItemIndex != 4 )
+{
+Event = 1;	// fire
+}
 				case 3:
 				case 4:
                                 case 5:
