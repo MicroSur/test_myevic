@@ -16,7 +16,7 @@ Advanced menu allows you to perform many configurations.
 
 Russian SME documentation is the most complete and constantly updated.
 
-## The contents
+## Contents
 __1.__ [Supported device and installation instructions](git_doc_en/usageandcompatibility_en.md)
 
 __2.__ [New features](git_doc_en/behaviourchanges_en.md)
