@@ -20,8 +20,8 @@
 * __Temperature Control (TCR)__
 
   ![](https://www.dropbox.com/s/n09iy9nu57jnv18/tcrset.png?dl=1)
-        
-   In addition to the three customizable TC modes (M1, M2, M3), you can set fixed values ​​for the other modes (TEMP NI, TI, SS). For this:
+      
+In addition to the three customizable TC modes (M1, M2, M3), you can set fixed values ​​for the other modes (TEMP NI, TI, SS). For this:
    * Select the mode to unlock,
    * Long press the Start button to unlock this item. A suitable value will appear on the screen, you can edit it.
    * Repeated long press Start will return the default setting, if necessary.
