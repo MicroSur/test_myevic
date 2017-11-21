@@ -13,7 +13,7 @@ If you continue holding Fire and Right (+) buttons after entering menus, after t
 
 -----
 
-← Previous Page: [Profiles](profiles_en.md) --  Next Page: [Main Screen](mainscr_en.md)→
+← Previous Page: [Profiles](profiles_ru.md) --  Next Page: [Main Screen](mainscr_ru.md)→
 
 
 
