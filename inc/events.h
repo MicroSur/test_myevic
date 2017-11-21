@@ -59,7 +59,7 @@ extern uint8_t	LastEvent;
 // Events 100+ are custom events not existing in the OFW
 
 #define EVENT_TOGGLE_CLOCK		100
-#define EVENT_DEBUG_MODE		101
+//#define EVENT_DEBUG_MODE		101
 #define EVENT_EDIT_CONTRAST		102
 #define EVENT_ENTER_MENUS		103
 #define EVENT_LONG_FIRE			104
@@ -80,7 +80,8 @@ extern uint8_t	LastEvent;
 #define EVENT_NEXT_PROFILE		119
 #define EVENT_POWER_CURVE		120
 #define EVENT_TETRIS                    121
-
+#define EVENT_SAVER                     122
+#define EVENT_SET_JOULES		123
 
 //==============================================================================
 
@@ -95,6 +96,7 @@ enum
 	CLICK_ACTION_PROFILE,
         CLICK_ACTION_TETRIS,
         CLICK_ACTION_GAME,
+        CLICK_ACTION_SAVER,
 	CLICK_ACTION_MAX
 };
 
@@ -108,7 +110,8 @@ extern S_RTC_TIME_DATA_T SetTimeRTD;
 extern void KeyRepeat();
 extern void GetUserInput();
 extern void EventHandler();
-
+extern void ResetVapedCounter();
+extern void ResetAllCounters();
 extern int CustomEvents();
 
 extern void PowerPlus( uint16_t *pwr, uint16_t min, uint16_t max );

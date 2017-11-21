@@ -174,11 +174,11 @@ __myevic__ void KeyRepeat()
 
 		if ( !PD2 )
 		{
-			Event = 2;
+			Event = dfStatus2.swap_mp ? 3: 2;
 		}
 		else if ( !PD3 )
 		{
-			Event = 3;
+			Event = dfStatus2.swap_mp ? 2: 3;
 		}
 	}
 }
@@ -189,16 +189,34 @@ __myevic__ void KeyRepeat()
 // Called at 100Hz
 __myevic__ void GetUserInput()
 {
+        static uint8_t	apuff = 0;
+        
 	UserInputs = 14;
 
 	if ( ( !PE0 || AutoPuffTimer ) && PD2 && PD3 )
 	{
-		if ( !PE0 ) AutoPuffTimer = 0;
-
-		if (( LastInputs == 5 ) || ( LastInputs == 6 ))
-			return;
-
-		UserInputs = 1;
+            
+            	if (( LastInputs == 5 ) || ( LastInputs == 6 ))
+                    return; // f+rb / f+lb
+                        
+		if ( !PE0 ) //AutoPuffTimer = 0; //fb pressed
+                { 
+                    if ( dfStatus.autopuff && dfAutoPuffTimer )
+                    {
+                        if ( FireClickCount > 1 || KeyPressTime > 80 )
+                        {
+                            AutoPuffTimer = 0;
+                            apuff = 0;
+                        }
+                        else if ( KeyPressTime >= 20 && !AutoPuffTimer && Screen == 2 ) //on fire screen...
+                        {
+                            AutoPuffTimer = (uint16_t)dfAutoPuffTimer * 10 - FireDuration * 10;
+                            apuff = 1;
+                        }
+                    }
+                }
+                
+		UserInputs = 1;  
 	}
 	else
 	{
@@ -206,7 +224,18 @@ __myevic__ void GetUserInput()
 		{
 			if ( LastInputs == 1 )
 			{
-				StopFire();
+				StopFire();                            
+                                //gFlags.refresh_display = 1; //bad idea // for correct last FireDuration in TC
+                                if ( apuff )
+                                {
+                                    apuff = 0;
+                                    FireDuration = (uint16_t)dfAutoPuffTimer;
+                                    if ( dfStealthOn != 1 )
+                                    {
+                                        ShowFireDuration( 0 );
+                                        DisplayRefresh();   
+                                    }
+                                }
 			}
 			gFlags.user_idle = 1;
 			LastInputs = -1;
@@ -220,11 +249,11 @@ __myevic__ void GetUserInput()
 			FireClicksEvent = 0;
 		}
 
-		if ( !dfStatus.off || IsMenuScreen() )
-		{
+		//if ( !dfStatus.off || IsMenuScreen() )
+		//{
 			if ( !PD2 ) UserInputs = 2;
 			if ( !PD3 ) UserInputs = 3;
-		}
+		//}
 
 		if ( !PD2 && !PD3 ) UserInputs = 4;
 		if ( !PE0 && !PD2 ) UserInputs = 5;
@@ -234,7 +263,7 @@ __myevic__ void GetUserInput()
 		{
 			if ( !gFlags.usb_attached )
 			{
-				UserInputs = 10;
+				UserInputs = 10; // USB cable attach
 				BattProbeCount = 0;
 
 				if ( dfStatus.off && FireClickCount == 1 )
@@ -247,7 +276,7 @@ __myevic__ void GetUserInput()
 		{
 			if ( gFlags.usb_attached )
 			{
-				UserInputs = 11;
+				UserInputs = 11; // USB cable detach
 			}
 		}
 
@@ -272,19 +301,19 @@ __myevic__ void GetUserInput()
 					}
 				}
 			}
-			else if ( !ISCUBOID && !ISCUBO200 && !ISRX200S && !ISRX23 && !ISRX300 && !ISPRIMO1 && !ISPRIMO2 && !ISPREDATOR )
+			else if ( !ISCUBOID && !ISCUBO200 && !ISRX200S && !ISRX23 && !ISRX300 && !ISPRIMO1 && !ISPRIMO2 && !ISPREDATOR && !ISGEN3 && !ISRX2 && !ISINVOKE )
 			{
 				if ( !PD7 && !gFlags.battery_charging )
 				{
 					if ( !BattProbeCount || BattProbeCount >= 50 )
 					{
-						UserInputs = 12;
+						UserInputs = 12; //start hard charge 
 						BattProbeCount = 0;
 					}
 				}
 				else if ( PD7 && gFlags.battery_charging )
 				{
-					UserInputs = 13;
+					UserInputs = 13; //stop hard charge
 					BattProbeCount = 1;
 				}
 			}
@@ -353,11 +382,14 @@ __myevic__ void GetUserInput()
 			{
 				case 1:
 					FireClicksEvent = 15;	// single click
-
+                                       
 					if ( Screen != 1 || !EditModeTimer || ( EditItemIndex != 4 && EditItemIndex != 5 ) )
 					{
 						Event = 1;	// fire
-					}
+					}           
+                                        
+                                       // if (AutoPuffTimer ) Event = EVENT_AUTO_PUFF;
+                                                                
 					break;
 
 				case 2:
@@ -365,13 +397,14 @@ __myevic__ void GetUserInput()
 				case 4:
                                 case 5:
 					switch ( dfClick[FireClickCount-2] )
+                                        //switch ( gFlags.asleep ? dfClick[FireClickCount-3] : dfClick[FireClickCount-2] )
 					{
 						default:
 							break;
 
 						case CLICK_ACTION_NONE:
-							if ( FireClickCount == 4 )
-								FireClicksEvent = EVENT_DEBUG_MODE;	// debug mode
+						//	if ( FireClickCount == 4 )
+						//		FireClicksEvent = EVENT_DEBUG_MODE;	// debug mode
 							break;
 
 						case CLICK_ACTION_EDIT:
@@ -406,6 +439,10 @@ __myevic__ void GetUserInput()
                                                 case CLICK_ACTION_GAME:
 							FireClicksEvent = 41;	// Game
 							break;
+                                                        
+                                                case CLICK_ACTION_SAVER:
+							FireClicksEvent = EVENT_SAVER; // tetris
+							break;                                                        
 					}
 					if ( dfStatus.off )
 					{
@@ -416,26 +453,28 @@ __myevic__ void GetUserInput()
 					}
 					break;
 
-/*
-				case 5:
-					Event = 17;	// Switch On/Off
-					break;
-*/
+                                default:
+                                        FireClicksEvent = 17; //not Event
+                                        break;
+                                            
+				//case 5:
+				//	Event = 17;	// Switch On/Off
+				//	break;
 
-				case 7:
-					FireClicksEvent = 31;	// board temp screen from on state
-					break;
+				//case 7:
+				//	FireClicksEvent = 31;	// board temp screen from on state
+				//	break;
 
-				case 6:                               
-					FireClicksEvent = 29;	// firmware version screen from on state
-					break;
+				//case 6:                               
+				//	FireClicksEvent = 29;	// firmware version screen from on state
+				//	break;
                                         
-                                case 8:                                    
-					FireClicksEvent = 20;	// Info screen
-					break;
+                                //case 7:                                    
+				//	FireClicksEvent = 20;	// Info screen
+				//	break;
 			}
 		}
-		else if ( UserInputs == 2 )
+		else if ( UserInputs == 2 ) //right button
 		{
 			if ( Screen == 60 )
 			{
@@ -453,10 +492,10 @@ __myevic__ void GetUserInput()
 			}
 			else
 			{
-				Event = 2;	// + button
-			}
+				Event = dfStatus2.swap_mp ? 3: 2;
+			}                    
 		}
-		else if ( UserInputs == 3 )
+		else if ( UserInputs == 3 ) //left button
 		{
 			if ( Screen == 60 )
 			{
@@ -474,8 +513,8 @@ __myevic__ void GetUserInput()
 			}
 			else
 			{
-				Event = 3;	// - button
-			}
+				Event = dfStatus2.swap_mp ? 2: 3;
+			}                                              
 		}
 	}
 	else if ( KeyPressTime == 20 )
@@ -524,7 +563,7 @@ __myevic__ void GetUserInput()
 			}
 		}
 	}
-        else if ( KeyPressTime == 120 )
+        else if ( KeyPressTime == 100 )
         {
 		if ( UserInputs == 5 )
 		{
@@ -549,7 +588,21 @@ __myevic__ void GetUserInput()
 			{
 				Event = 6;	// stealth on/off
 			}
-		}            
+		}   
+		else if ( UserInputs == 4 ) //left + right
+		{
+			if ( !EditModeTimer )
+			{
+				if ( dfStatus.off )
+				{
+					Event = 18;	// flip display
+				}
+				else
+				{
+					Event = 4;	// key (un)lock
+				}
+			}
+		}                
         }
 	else if ( KeyPressTime == 200 )
 	{
@@ -582,6 +635,7 @@ __myevic__ void GetUserInput()
                     }
                     
 		}
+/*
 		else if ( UserInputs == 4 )
 		{
 			if ( !EditModeTimer )
@@ -596,6 +650,7 @@ __myevic__ void GetUserInput()
 				}
 			}
 		}
+*/
 /*
 		else if ( UserInputs == 5 )
 		{
@@ -670,7 +725,7 @@ __myevic__ int EvtFire()
 			vret = 1;
                         break;
 
-		case 102:
+		case 102:    
 		{
 			vret = MenuEvent( LastEvent );
 		}
@@ -718,6 +773,16 @@ __myevic__ int EvtFire()
 			}
 			vret = 1;
 		}
+                break;
+                
+                case EVENT_SET_JOULES: //scr = event
+                {    
+                	EditModeTimer = 0;
+			//MainView();
+                        //CurrentMenuItem = 6;
+                        Event = EVENT_PARENT_MENU;
+                        vret = 1;
+                }    
 	}
 
 	return vret;
@@ -744,8 +809,10 @@ __myevic__ int EvtSingleFire()
 		case 105:
 		case 106:
 		case 107:
+                case 50:     // FW Version
+                case EVENT_SET_JOULES:    
 		{
-			vret = 1;
+			vret = 1; // prevents immediate call of mainview
 		}
 		break;
 
@@ -942,9 +1009,24 @@ __myevic__ int EvtPlusButton()
 			}
 			EditModeTimer = 3000;
 			gFlags.refresh_display = 1;
-			vret = 1;
-			break;
+			vret = 1;	
 		}
+                break;
+                
+                case EVENT_SET_JOULES: // scr = event
+		{                    
+                    	if ( ++dfVVRatio > VVEL_MAX_RATIO )
+			{
+				if ( KeyTicks < 5 ) dfVVRatio = VVEL_MIN_RATIO;
+				else dfVVRatio = VVEL_MAX_RATIO;
+			}
+                        UpdateDFTimer = 50;
+                        //EditModeTimer = 3000;
+                        ScreenDuration = 60;
+			gFlags.refresh_display = 1;
+			vret = 1;
+		}
+                break;
 	}
 
 	return vret;
@@ -1102,8 +1184,23 @@ __myevic__ int EvtMinusButton()
 			EditModeTimer = 3000;
 			gFlags.refresh_display = 1;
 			vret = 1;
-			break;
 		}
+                break;
+                
+                case EVENT_SET_JOULES: //scr = event
+		{                    
+                        if ( --dfVVRatio < VVEL_MIN_RATIO  )
+                        {
+				if ( KeyTicks < 5 ) dfVVRatio = VVEL_MAX_RATIO;
+				else dfVVRatio = VVEL_MIN_RATIO;
+                        }
+                        UpdateDFTimer = 50;
+                        //EditModeTimer = 3000;
+                        ScreenDuration = 60;
+			gFlags.refresh_display = 1;
+			vret = 1;
+		}
+                break;                
 	}
 
 	return vret;
@@ -1122,6 +1219,7 @@ __myevic__ int EvtToggleClock()
 
 //-------------------------------------------------------------------------
 
+/*
 __myevic__ int EvtDebugMode()
 {
 	if ( dfStatus.dbgena )
@@ -1135,6 +1233,7 @@ __myevic__ int EvtDebugMode()
 	gFlags.refresh_display = 1;
 	return 1;
 }
+*/
 
 //-------------------------------------------------------------------------
 
@@ -1144,7 +1243,7 @@ __myevic__ int EvtLongFire()
 
 	switch ( Screen )
 	{
-            	case 101:
+            	case 101: //contrast
 		{
 			//UpdateDataFlash();
 			Event = EVENT_PARENT_MENU;
@@ -1152,11 +1251,11 @@ __myevic__ int EvtLongFire()
 		}
 		break;
                 
-		case 102:
+		case 102: //menus
 			vret = MenuEvent( LastEvent );
 			break;
 
-		case 106:
+		case 106: //SetDate
 		{
 			S_RTC_TIME_DATA_T rtd;
 
@@ -1166,11 +1265,11 @@ __myevic__ int EvtLongFire()
 			SetTimeRTD.u32Second = rtd.u32Second;
 			// NOBREAK
 		}
-
-		case 105:
+		case 105: //SetTime
 			SetRTC( &SetTimeRTD );
 			EditModeTimer = 0;
-			MainView();
+			//MainView();
+                        Event = EVENT_PARENT_MENU;
 			vret = 1;
 			break;
 
@@ -1182,7 +1281,19 @@ __myevic__ int EvtLongFire()
 			gFlags.edit_value = 0;
 			gFlags.refresh_display = 1;
 			vret = 1;
+                        break;
 		}
+                
+/*
+		case EVENT_SET_JOULES:
+                        dfVVRatio = VVEL_DEF_RATIO;  
+                        //        gFlags.edit_value = 0;
+			//EditModeTimer = 0;
+			//MainView();
+                        //Event = EVENT_PARENT_MENU;
+			vret = 1;
+			break;                
+*/
 	}
 
 	return vret;
@@ -1213,6 +1324,23 @@ __myevic__ int EvtEnterMenus()
 
 S_RTC_TIME_DATA_T SetTimeRTD;
 
+/*
+__myevic__ int EvtSet( int what )
+{
+    	switch ( what )
+	{
+            	case 0: //EvtSetTime
+                    case 1: //EvtSetDate
+                        case 2: //EvtSetJoules
+		{
+	GetRTC( &SetTimeRTD );
+	SetScreen( 105, 60 );
+	EditItemIndex = 2;
+	EditModeTimer = 6000;
+	return 1;
+}
+*/
+
 __myevic__ int EvtSetTime()
 {
 	GetRTC( &SetTimeRTD );
@@ -1229,6 +1357,31 @@ __myevic__ int EvtSetDate()
 	EditItemIndex = 2;
 	EditModeTimer = 6000;
 	return 1;
+}
+
+__myevic__ int EvtSetJoules()
+{
+	SetScreen( EVENT_SET_JOULES, 60 ); //scr 123
+	//EditItemIndex = 0;
+	//EditModeTimer = 6000;
+	return 1;
+}
+
+__myevic__ void ResetVapedCounter()
+{
+    time_t t;
+    RTCGetEpoch( &t );
+    t = t - ( t% 86400 );
+    MilliJoules = 0;
+    RTCWriteRegister( RTCSPARE_VV_BASE, t ); 
+}
+__myevic__ void ResetAllCounters()
+{
+    dfTimeCount = 0;
+    dfPuffCount = 0;
+    UpdatePTTimer = 80;
+    ResetVapedCounter();
+    UpdateDFTimer = 50;
 }
 
 //-------------------------------------------------------------------------
@@ -1270,12 +1423,14 @@ __myevic__ int CustomEvents()
 			break;
 
 		case EVENT_ENTER_MENUS:	// Menus screen
+                        gFlags.MainContrast = 1;
+                        DisplaySetContrast( dfContrast );
 			vret = EvtEnterMenus();
 			break;
 
-		case EVENT_DEBUG_MODE:
-			vret = EvtDebugMode();
-			break;
+		//case EVENT_DEBUG_MODE:
+		//	vret = EvtDebugMode();
+		//	break;
 
 		case EVENT_LONG_FIRE:
 			vret = EvtLongFire();
@@ -1292,7 +1447,11 @@ __myevic__ int CustomEvents()
 		case EVENT_SET_TIME:
 			vret = EvtSetTime();
 			break;
-
+                        
+		case EVENT_SET_JOULES:
+			vret = EvtSetJoules();
+			break;
+                        
 		case EVENT_SET_DATE:
 			vret = EvtSetDate();
 			break;
@@ -1317,28 +1476,29 @@ __myevic__ int CustomEvents()
 
 		case EVENT_RESET_VVEL:
 		{
-			time_t t;
-			RTCGetEpoch( &t );
-			t = t - ( t% 86400 );
-			MilliJoules = 0;
-			RTCWriteRegister( RTCSPARE_VV_BASE, t );
-			EditModeTimer = 1000;
+                        ResetVapedCounter();
+                        EditModeTimer = 1000;
 			gFlags.refresh_display = 1;
-			gFlags.draw_edited_item = 1;
+			gFlags.draw_edited_item = 1;  
 			break;
 		}
 
+/*
 		case EVENT_FORCE_VCOM:
-			dfStatus.storage = 0;
+			//dfStatus.storage = 0;
 			dfStatus.vcom = 1;
 			InitUSB();
 			break;
+*/
 
 		case EVENT_AUTO_PUFF:
-			if ( AutoPuffTimer > 0 )
-				MainView();
-			else
-				StopFire();
+			//if ( AutoPuffTimer > 0 )
+                        //{
+			////	MainView();
+                        //}
+			//else
+			if ( !AutoPuffTimer )
+                            StopFire();
 			break;
 
 		case EVENT_CLK_ADJUST:
@@ -1386,6 +1546,12 @@ __myevic__ int CustomEvents()
  			ttStartGame();
 			break;
                         
+                case EVENT_SAVER:
+			Screen = 60;
+			ScreenDuration = GetScreenProtection();
+                        gFlags.refresh_display = 1;
+			break;   
+                                               
 		default:
 			vret = 0;
 			break;

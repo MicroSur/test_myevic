@@ -35,7 +35,7 @@ extern uint16_t RTBattVolts;
 extern uint16_t	RTBVolts[4];
 extern uint16_t	RTBVTotal;
 extern uint16_t LowBatVolts;
-extern uint32_t	PowerScale;
+//extern uint32_t	PowerScale; // no auto power down
 extern uint16_t	BatteryVoltage;
 extern uint16_t	BattVoltsTotal;
 extern uint16_t	BattVolts[4];
@@ -45,6 +45,7 @@ extern uint16_t	BatteryMaxPwr;
 extern uint8_t	BatteryPercent;
 extern uint8_t	SavedBatPercent;
 extern uint8_t	BatteryTenth;
+extern uint8_t	BatteryTenthAll[4];
 extern uint8_t	NoEventTimer;
 extern uint8_t	BatReadTimer;
 extern uint8_t	NumBatteries;
@@ -57,7 +58,7 @@ extern uint8_t	BattProbeCount;
 
 extern uint8_t	USBMaxLoad;
 extern uint8_t	ChargeStatus;
-extern uint8_t	BatteryStatus;
+extern uint8_t	BatteryStatus; // 0- ok? / 1- ooe / 2- no batt / 3- bad high usb, 4- charge err low output current?
 extern uint8_t	BBBits;
 extern uint8_t	ChargeMode;
 extern uint8_t	ChargeStep;
@@ -77,6 +78,8 @@ extern void SetBatteryModel();
 extern const uint8_t *GetBatteryName();
 extern void ReadInternalResistance();
 extern void SetBatMaxPower();
+extern void SetMaxPower( const uint16_t p );
+extern void SetMaxVolts( const uint16_t v );
 extern void BatteryChargeDual();
 extern void BatteryCharge();
 extern void SaveCustomBattery( const Battery_t *b );

@@ -32,10 +32,8 @@ int tetrisScreen[14][24] = {
 
 uint8_t ttTetrisLine = 14;
 uint8_t ttAnimStep = 0;
-//uint8_t ttAnimTimer = 0;
 uint16_t ttScore;
 int levellineCount = 0;
-//uint8_t score = 0;
 uint8_t ttTimeoutMask = 0;
 uint8_t ttCurrentTimeout = 0;
 uint8_t ttUsedTimeouts = 0;
@@ -50,9 +48,7 @@ uint8_t ttKeyDown = 0;
 uint8_t ttFireDown = 0;
 uint8_t ttLongFireDown = 0;
 uint16_t ttKeyTick = 0;
-//uint16_t ttKeyPressTime = 0;
 uint8_t pause = 0;
-uint8_t ScrFlip;
 int bto;
 uint8_t FastMove = 0; //for score
 uint8_t noShift = 1;
@@ -550,8 +546,12 @@ void CompletedLines() {
         AmountScored += FastMove; // fast drop count + noTouch + noRotate
         FastMove = 0;
         AmountScored *= level;
-
-        ttScore += AmountScored;
+        
+        if ( ( ttScore + AmountScored ) >> 8 < 255  )
+            ttScore += AmountScored;
+        else
+            gameOver = 2;
+        
         setScore(ttScore, 1);
 
         //update level line count & level
@@ -561,8 +561,13 @@ void CompletedLines() {
             levellineCount = 0;
             //do level up affect
         }
-        if (dfTTSpeed != 2) {
-            if (level > 10) gameOver = 1;
+        if (dfTTSpeed != 2) 
+        {
+            if (level > 10) gameOver = 2;
+        }
+        else
+        {
+            if (level > 99) gameOver = 2;
         }
         setLevel(level, 1);
 
@@ -668,7 +673,7 @@ void CheckButtons() {
         if (pause) return;
 
         if (!PD2) {
-            if (ScrFlip) movePieceLeft();
+            if ( !ScrFlip && dfStatus.flipped ) movePieceLeft();
             else movePieceRight();
             noShift = 0;
             ttKeyDown = 1;
@@ -677,7 +682,7 @@ void CheckButtons() {
             return;
 
         } else if (!PD3) {
-            if (ScrFlip) movePieceRight();
+            if ( !ScrFlip && dfStatus.flipped ) movePieceRight();
             else movePieceLeft();
             noShift = 0;
             ttKeyDown = 1;
@@ -727,10 +732,10 @@ void CheckButtons() {
 
 void ttStartScreen() {
 
-    const uint8_t strVaping[] = {0x7D, 0x68, 0x77, 0x70, 0x75, 0x6E, 0x00};
-    const uint8_t strTetris[] = {0xAF, 0xA0, 0xAF, 0xAD, 0xA4, 0xAE, 0x00};
-    const uint8_t strBestScore[] = {0x69, 0x6C, 0x7A, 0x7B, 0x00};
-    const uint8_t strLastScore[] = {0x8D, 0x82, 0x94, 0x95, 0x00};
+    //const uint8_t strVaping[] = {0x7D, 0x68, 0x77, 0x70, 0x75, 0x6E, 0x00};
+    //const uint8_t strTetris[] = {0xAF, 0xA0, 0xAF, 0xAD, 0xA4, 0xAE, 0x00};
+    //const uint8_t strBestScore[] = {0x69, 0x6C, 0x7A, 0x7B, 0x00};
+    //const uint8_t strLastScore[] = {0x8D, 0x82, 0x94, 0x95, 0x00};
 
     ttSetTimeoutDelay(10);
     if (!PE0 && (PD2 && PD3)) {
@@ -775,7 +780,7 @@ void ttStartScreen() {
 
     } else {
 
-        DrawFillRect(0, 18, 63, 84, 0); //erase
+        DrawFillRect(0, 18, 63, 108, 0); //erase
 
         if (ttAnimStep) {
             if (++ttTetrisLine == 16)
@@ -786,11 +791,16 @@ void ttStartScreen() {
                 ttAnimStep = 1;
         }
 
-        DrawString(strVaping, 12, ttTetrisLine + 20);
-        DrawString(strTetris, 12, ttTetrisLine + 30);
-
-        DrawString(strBestScore, 4, 60);
-        DrawString(strLastScore, 4, 70);
+        DrawString(String_Vaping, 12, ttTetrisLine + 20);
+        DrawString(String_Tetris, 12, ttTetrisLine + 30);
+        
+        uint8_t strbuf[5];
+        convert_string1( strbuf, "Best" );
+        DrawString(strbuf, 4, 60);
+        convert_string1( strbuf, "Last" );
+        DrawString(strbuf, 4, 70);
+        //DrawString(strBestScore, 4, 60);
+        //DrawString(strLastScore, 4, 70);
         DrawValue(29, 61, dfTTBest, 0, 1, 5);
         DrawValue(29, 71, ttScore, 0, 1, 5);
         
@@ -801,6 +811,13 @@ void ttStartScreen() {
                 case 2:	DrawStringCentered(String_Survival, 95); break;
 	}
         
+        if ( gameOver == 2 )
+        {
+            uint8_t strbuf[4];
+            convert_string1( strbuf, "WIN" );
+            DrawStringCentered(strbuf, 84);  
+        }
+        
         DrawTTCup();
         DisplayRefresh();
         ttSetTimeoutDelay(10);
@@ -810,7 +827,11 @@ void ttStartScreen() {
 
 void ttGame() {
 
-    if (pause) return;
+    if (pause) 
+    {
+        SleepTimer = 3000;
+        return;
+    }
 
     if (gameOver) {
         //ttCLSBuf();
@@ -856,14 +877,13 @@ void ttStartGame() {
         bto = 3;
     }
 
-    ScrFlip = dfStatus.flipped;
     gFlags.playing_tt = 1;
     Screen = 0;
     gFlags.user_idle = 1; //0
     gFlags.refresh_display = 1;
 
     NoEventTimer = 0;
-    SleepTimer = 0;
+    SleepTimer = 3000; //30 sec for first time
 
     ttInitTimeouts();
     ClearScreenBuffer();

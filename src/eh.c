@@ -182,12 +182,20 @@ __myevic__ void EventHandler()
 		{
 			if ( dfStatus.off )
 			{
-                            if( !gFlags.battery_charging && !dfStatus.offmodclock && Screen == 0 )
+                            if ( Screen == 60 )
                             {
-                                DrawDigitClock( 80 );
-                                DrawClock( 0 );   
-                                DisplayRefresh();
-                                KeyPressTime |= 0x8000;
+                                Screen = 0;
+				SleepTimer = 0;
+                                gFlags.refresh_display = 1;
+                            }
+                            else if( !gFlags.battery_charging && !dfStatus.offmodclock && Screen == 0 )
+                            {
+                                Screen = 60; //show ss clock when off
+                                ScreenDuration = 10; //GetScreenProtection();
+                                //DrawDigitClock( 80 );
+                                //DrawClock( 0 );   
+                                //DisplayRefresh();
+                                //KeyPressTime |= 0x8000; //bad for start clicks
                             }
                         return;                       
 			}
@@ -256,7 +264,7 @@ __myevic__ void EventHandler()
 				return;
 			}
 
-			if ( BoardTemp >= MaxBoardTemp )
+			if ( BoardTemp >= dfMaxBoardTemp )
 			{
 				Overtemp();
 				return;
@@ -271,7 +279,7 @@ __myevic__ void EventHandler()
 			switch ( AtoStatus )
 			{
 				case 1:
-					Event = 25;
+					Event = 25; //short
 					break;
 				case 2:
 					Event = 27;
@@ -286,16 +294,19 @@ __myevic__ void EventHandler()
 			}
 
 			if ( AtoError )
-				return;
+                        {
+                            return;
+                        }
+				
 
-			if ( byte_200000B3 == 1 )
+			if ( Set_NewRez_dfRez == 1 )
 			{
-				byte_200000B3 = 0;
+				Set_NewRez_dfRez = 0;
 				NewRez = AtoRez;
 				NewMillis = AtoMillis;
 
 				uint8_t lock = 0;
-				if 		( dfMode == 0 ) lock = dfRezLockedNI;
+				if 	( dfMode == 0 ) lock = dfRezLockedNI;
 				else if ( dfMode == 1 ) lock = dfRezLockedTI;
 				else if ( dfMode == 2 ) lock = dfRezLockedSS;
 				else if ( dfMode == 3 ) lock = dfRezLockedTCR;
@@ -325,7 +336,7 @@ __myevic__ void EventHandler()
 
 					if (  3 * dfRezNI >= NewRez )
 					{
-						if (	dfRezNI + dfRezNI / 20 < NewRez
+						if (	dfRezNI + dfRezNI * dfNewRezPerc / 100 < NewRez // dfRezNI / 20
 							&&	dfRezNI + 1 < NewRez
 							&&	!dfRezLockedNI )
 						{
@@ -336,8 +347,8 @@ __myevic__ void EventHandler()
 
 						if
 						(
-							(	(dfRezNI - dfRezNI / 20 <= NewRez || dfRezNI - 1 <= NewRez)
-							&&	(dfRezNI + dfRezNI / 20 >= NewRez || dfRezNI + 1 >= NewRez))
+							(	(dfRezNI - dfRezNI * dfNewRezPerc / 100 <= NewRez || dfRezNI - 1 <= NewRez) // dfRezNI / 20
+							&&	(dfRezNI + dfRezNI * dfNewRezPerc / 100 >= NewRez || dfRezNI + 1 >= NewRez)) // dfRezNI / 20
 						//||
 						//	(	dfRezLockedNI
 						//	&&	(dfRezNI - dfRezNI / 10 <= NewRez || dfRezNI - 4 <= NewRez))
@@ -348,7 +359,7 @@ __myevic__ void EventHandler()
 						}
 						else
 						{
-							if ( dfRezNI - dfRezNI / 20 > NewRez && dfRezNI - 1 > NewRez )
+							if ( dfRezNI - dfRezNI * dfNewRezPerc / 100 > NewRez && dfRezNI - 1 > NewRez ) // dfRezNI / 20
 							{
 								dfResistance = NewRez;
 								RezMillis = NewMillis;
@@ -384,7 +395,7 @@ __myevic__ void EventHandler()
 
 					if (  2 * dfRezTI >= NewRez )
 					{
-						if (	dfRezTI + dfRezTI / 20 < NewRez
+						if (	dfRezTI + dfRezTI * dfNewRezPerc / 100 < NewRez
 							&&	dfRezTI + 1 < NewRez
 							&&	!dfRezLockedTI )
 						{
@@ -395,8 +406,8 @@ __myevic__ void EventHandler()
 
 						if
 						(
-							(	(dfRezTI - dfRezTI / 20 <= NewRez || dfRezTI - 1 <= NewRez)
-							&&	(dfRezTI + dfRezTI / 20 >= NewRez || dfRezTI + 1 >= NewRez))
+							(	(dfRezTI - dfRezTI * dfNewRezPerc / 100 <= NewRez || dfRezTI - 1 <= NewRez)
+							&&	(dfRezTI + dfRezTI * dfNewRezPerc / 100 >= NewRez || dfRezTI + 1 >= NewRez))
 						//||
 						//	(	dfRezLockedTI
 						//	&&	(dfRezTI - dfRezTI / 10 <= NewRez || dfRezTI - 4 <= NewRez))
@@ -407,7 +418,7 @@ __myevic__ void EventHandler()
 						}
 						else
 						{
-							if ( dfRezTI - dfRezTI / 20 > NewRez && dfRezTI - 1 > NewRez )
+							if ( dfRezTI - dfRezTI * dfNewRezPerc / 100 > NewRez && dfRezTI - 1 > NewRez )
 							{
 								dfResistance = NewRez;
 								RezMillis = NewMillis;
@@ -443,7 +454,7 @@ __myevic__ void EventHandler()
 
 					if ( 3 * dfRezSS >= 2 * NewRez )
 					{
-						if (	dfRezSS + dfRezSS / 20 < NewRez
+						if (	dfRezSS + dfRezSS * dfNewRezPerc / 100 < NewRez
 							&&	dfRezSS + 1 < NewRez
 							&&	!dfRezLockedSS )
 						{
@@ -455,8 +466,8 @@ __myevic__ void EventHandler()
 						{
 							if
 							(
-								(	( dfRezSS - dfRezSS / 20 <= NewRez || dfRezSS - 1 <= NewRez )
-								&&	( dfRezSS + dfRezSS / 20 >= NewRez || dfRezSS + 1 >= NewRez ) )
+								(	( dfRezSS - dfRezSS * dfNewRezPerc / 100 <= NewRez || dfRezSS - 1 <= NewRez )
+								&&	( dfRezSS + dfRezSS * dfNewRezPerc / 100 >= NewRez || dfRezSS + 1 >= NewRez ) )
 							//||
 							//	(	  dfRezLockedSS
 							//	&&	( dfRezSS - dfRezSS / 10 <= NewRez || dfRezSS - 4 <= NewRez ) )
@@ -465,7 +476,7 @@ __myevic__ void EventHandler()
 								dfResistance = dfRezSS;
 								RezMillis = ( dfMillis & 0xf00 ) >> 8;
 							}
-							else if ( dfRezSS - dfRezSS / 20 > NewRez && dfRezSS - 1 > NewRez )
+							else if ( dfRezSS - dfRezSS * dfNewRezPerc / 100 > NewRez && dfRezSS - 1 > NewRez )
 							{
 								dfResistance = NewRez;
 								RezMillis = NewMillis;
@@ -501,7 +512,7 @@ __myevic__ void EventHandler()
 
 					if ( 3 * dfRezTCR >= 2 * NewRez )
 					{
-						if (	dfRezTCR + dfRezTCR / 20 < NewRez
+						if (	dfRezTCR + dfRezTCR * dfNewRezPerc / 100 < NewRez
 							&&	dfRezTCR + 1 < NewRez
 							&&	!dfRezLockedTCR )
 						{
@@ -513,8 +524,8 @@ __myevic__ void EventHandler()
 						{
 							if
 							(
-								(	( dfRezTCR - dfRezTCR / 20 <= NewRez || dfRezTCR - 1 <= NewRez )
-								&&	( dfRezTCR + dfRezTCR / 20 >= NewRez || dfRezTCR + 1 >= NewRez ) )
+								(	( dfRezTCR - dfRezTCR * dfNewRezPerc / 100 <= NewRez || dfRezTCR - 1 <= NewRez )
+								&&	( dfRezTCR + dfRezTCR * dfNewRezPerc / 100 >= NewRez || dfRezTCR + 1 >= NewRez ) )
 							//||
 							//	(	  dfRezLockedTCR
 							//	&&	( dfRezTCR - dfRezTCR / 10 <= NewRez || dfRezTCR - 4 <= NewRez ) )
@@ -523,7 +534,7 @@ __myevic__ void EventHandler()
 								dfResistance = dfRezTCR;
 								RezMillis = ( dfMillis & 0xf000 ) >> 12;
 							}
-							else if ( dfRezTCR - dfRezTCR / 20 > NewRez && dfRezTCR - 1 > NewRez )
+							else if ( dfRezTCR - dfRezTCR * dfNewRezPerc / 100 > NewRez && dfRezTCR - 1 > NewRez )
 							{
 								dfResistance = NewRez;
 								RezMillis = NewMillis;
@@ -553,13 +564,14 @@ __myevic__ void EventHandler()
 				GPIO_SetMode( PD, GPIO_PIN_PIN1_Msk, GPIO_MODE_OUTPUT );
 				PD1 = 0;
 			}
-			else if ( !ISCUBOID && ! ISCUBO200 && !ISRX200S && !ISRX23 && !ISRX300 && !ISPRIMO1 && !ISPRIMO2 && !ISPREDATOR )
+			else if ( !ISCUBOID && ! ISCUBO200 && !ISRX200S && !ISRX23 
+                                && !ISRX300 && !ISPRIMO1 && !ISPRIMO2 && !ISPREDATOR && !ISGEN3 && !ISRX2 && !ISINVOKE )
 			{
 				GPIO_SetMode( PD, GPIO_PIN_PIN7_Msk, GPIO_MODE_OUTPUT );
 				PD7 = 0;
 			}
 
-			if ( ISEGRIPII || ISEVICAIO )
+			if ( ISEGRIPII || ISEVICAIO || ISSINP80 )
 			{
 				if ( !dfStealthOn )
 				{
@@ -572,6 +584,8 @@ __myevic__ void EventHandler()
                            
 			gFlags.firing = 1;
 			FireDuration = 0;
+                        CurveRepeatTimerDuration=0;
+                        
                         if ( Screen == 1 ) gFlags.FireNotFlipped = 1;
         
 			if ( BattProbeCount == 1 ) BattProbeCount = 2;
@@ -591,7 +605,7 @@ __myevic__ void EventHandler()
 					break;
 
 				case 4:
-					if ( dfMode == 3 )
+					if ( dfMode == 3 || dfMode == 4 || dfMode == 5 ) //for power & bypass too
 					{
 						TCR = dfTCRM[dfTCRIndex];
 					}
@@ -606,7 +620,7 @@ __myevic__ void EventHandler()
 			}
 
 			TargetVolts = 100;
-			PowerScale = 100;
+			//PowerScale = 100;
 
 			if ( ISMODETC(dfMode) )
 			{
@@ -622,7 +636,7 @@ __myevic__ void EventHandler()
 							// 10W - 40W on full temp range
 							int p  = 100 + ( 3 * ( tempf - 200 ) / 4 );
 
-							TargetVolts = GetAtoVWVolts( p );
+							TargetVolts = GetAtoVWVolts( p, AtoRez );
 						}
 						else
 						{
@@ -683,9 +697,18 @@ __myevic__ void EventHandler()
 					}
                                         if ( !PreheatDelay ) pc = 1;
 				}
-				else if ( !PreheatDelay && dfPreheatTime )
+				//else if ( !PreheatDelay && dfStatus.preheat )
+                                else if ( dfStatus.preheat )
 				{
+                                    if (dfStatus2.smart_ph && dfPHDelay && NextPreheatTimer )
+                                    {
+                                        PreheatTimer = NextPreheatTimer;
+                                    } 
+                                    else if ( !PreheatDelay )
+                                    {
 					PreheatTimer = dfPreheatTime;
+                                    }
+                                        
 
 					if ( dfStatus.phpct )
 					{
@@ -718,7 +741,8 @@ __myevic__ void EventHandler()
                                 
                                 if ( dfStatus.vvlite && !pc )
                                 {
-                                    TargetVolts = dfVWVolts;
+                                    if ( !dfVVLockedVolt ) dfVVLockedVolt = dfVWVolts;
+                                    TargetVolts = dfVVLockedVolt;
                                 }
                                 else
                                 {
@@ -739,11 +763,13 @@ __myevic__ void EventHandler()
 			{
 				SetADCState( 15, 1 );
 			}
+                        
 			AtoWarmUp();
+                        
 			if ( !gFlags.firing || LastInputs != 1 )
 				StopFire();
 			gFlags.refresh_display = 1;
-			Screen = 2;
+			Screen = 2; //on fire screen
 			ScreenDuration = 1;
 			return;
 		}
@@ -770,6 +796,7 @@ __myevic__ void EventHandler()
 			ScreenDuration = 10;
 			return;
 
+/*
 		case 31:	// Show board temperature
 			if ( dfStatus.off )
 				return;
@@ -777,6 +804,7 @@ __myevic__ void EventHandler()
 			Screen = 37;
 			ScreenDuration = 5;
 			return;
+*/
 
 		case 30:	// Key lock violation
 			if ( dfStatus.off )
@@ -791,7 +819,7 @@ __myevic__ void EventHandler()
 				return;
 			gFlags.refresh_display = 1;
 			Screen = 50;
-			ScreenDuration = 5;
+			ScreenDuration = 10;
 			return;
 
 		case 28:	// Battery < 3.1V idle or < 2.8V firing
@@ -822,7 +850,19 @@ __myevic__ void EventHandler()
 			Screen = 21;
 			ScreenDuration = 2;
 			return;
-
+                        
+		case 70:	// Atomizer short current
+			gFlags.refresh_display = 1;
+			Screen = 70;
+			ScreenDuration = 2;
+			return;
+                        
+                case 71:	// Atomizer short Bad contact
+			gFlags.refresh_display = 1;
+			Screen = 71;
+			ScreenDuration = 2;
+			return;
+                        
 		case 24:	// 10s Fire protection
 			StopFire();
 			if ( AtoError )
@@ -851,13 +891,13 @@ __myevic__ void EventHandler()
 			gFlags.draw_edited_item = 1;
 			return;
                         
-		case 20:	// Show Info
-			if ( dfStatus.off )
-				return;
-			gFlags.refresh_display = 1;
-			Screen = 100;
-			ScreenDuration = 5;
-			return;
+		//case 20:	// Show Info
+		//	if ( dfStatus.off )
+		//		return;
+		//	gFlags.refresh_display = 1;
+		//	Screen = 100;
+		//	ScreenDuration = 10;
+		//	return;
                         
 		case 18:	// Flip display
 			if ( !dfStatus.off )
@@ -951,6 +991,8 @@ __myevic__ void EventHandler()
 			gFlags.battery_charging = 1;
 			gFlags.refresh_display = 1;
 			BatAnimLevel = BatteryTenth;
+                        gFlags.nbcr = 0;
+                        
 			if ( !IsMenuScreen() )
 			{
 				if ( BatteryStatus == 1 )
@@ -985,13 +1027,15 @@ __myevic__ void EventHandler()
 			}
 			gFlags.usb_attached = 0;
 			gFlags.battery_charging = 0;
+                        dfStatus.usbchghotoff = 0;
 			gFlags.monitoring = 0;
 			if ( Screen == 5 )
 			{
-				if ( dfStatus.off || dfStealthOn )
+				if ( dfStatus.off || dfStealthOn == 1 )
 				{
+                                    	Screen = 0;
 					gFlags.refresh_display = 1;
-					Screen = 0;
+                                        
 					if ( dfStatus.off )
 						SleepTimer = 0;
 					else
@@ -1010,7 +1054,7 @@ __myevic__ void EventHandler()
 			ChargeStatus = 1;
 			if ( NumBatteries > 1 )
 			{
-                            if ( ISPRIMO2 || ISPREDATOR )
+                            if ( ISPRIMO2 || ISPREDATOR || ISGEN3 || ISRX2 || ISINVOKE)
                             {
                                 USBMaxLoad = 3;
                             } 
@@ -1041,7 +1085,10 @@ __myevic__ void EventHandler()
 		case 6:		// Stealth On/Off
 			if ( dfStatus.off )
 				return;
-			dfStealthOn = ( dfStealthOn == 0 );
+                        
+			//dfStealthOn = ( dfStealthOn == 0 );
+                        if ( ++dfStealthOn > 2 ) dfStealthOn = 0; // 2 fire contrast
+                        
 			gFlags.refresh_display = 1;
 			Screen = 40;
 			ScreenDuration = 2;
@@ -1064,6 +1111,14 @@ __myevic__ void EventHandler()
 
 		case 3:		// - (minus or left) button
 		{
+                    
+                        if ( Screen == 5 && dfStealthOn != 1) //charge scr on off
+			{
+				gFlags.screen_on = ( gFlags.screen_on == 0 );                                
+                                ScreenDuration = 0;                               
+                                gFlags.refresh_display = 1;
+			}
+                                            
 			if ( dfStatus.off )
 			{
 				return;
@@ -1076,7 +1131,7 @@ __myevic__ void EventHandler()
 					MainView();
                                     }         
 			} 
-
+                        
 			if ( Screen == 2 )
 			{
 				MainView();
@@ -1161,37 +1216,39 @@ __myevic__ void EventHandler()
 					{
 						dfStatus.priopwr ? PowerMinus( &dfTCPower, 10, MaxTCPower ) : TempMinus();
 					}
-					else if ( dfMode == 6 )
+					else if ( dfMode == 6 ) // -
 					{
 						if ( ConfigIndex < 10 )
 						{
 							spwr = dfSavedCfgPwr[ConfigIndex];
-							spwr -= spwr % 10;
-							spwr -= 10;
+							spwr -= spwr % WattsInc; //10;
+							spwr -= WattsInc; //10;
 							if ( spwr < AtoMinPower ) spwr = AtoMinPower;
 
 							dfSavedCfgPwr[ConfigIndex] = spwr;
-							dfVWVolts = GetAtoVWVolts( spwr );
+							dfVWVolts = GetAtoVWVolts( spwr, AtoRez );
+                                                        //dfPower = spwr;
 						}
 					}
 					else if ( dfMode == 4 )
 					{
 						PowerMinus( &dfPower, AtoMinPower, AtoMaxPower );
-						dfVWVolts = GetAtoVWVolts( dfPower );
-						if ( ConfigIndex < 10 && !AtoError && AtoRez )
-						{
-							dfSavedCfgPwr[ConfigIndex] = dfPower;
-						}
+						dfVWVolts = GetAtoVWVolts( dfPower, AtoRez );
+                                                dfVVLockedVolt = GetAtoVWVolts( dfPower, dfResistance );
+						//if ( ConfigIndex < 10 && !AtoError && AtoRez )
+						//{
+						//	dfSavedCfgPwr[ConfigIndex] = dfPower;
+						//}
 					}
 				}
 
-	            MainView();
-	            if ( KeyTicks >= 5 )
-	            {
+                                MainView();
+                                if ( KeyTicks >= 5 )
+                                {
 					gFlags.draw_edited_item = 1;
-	                DrawScreen();
-	            }
-	            UpdateDFTimer = 50;
+                                        DrawScreen();
+                                }
+                                UpdateDFTimer = 50;
 			}
 
 			break;
@@ -1289,14 +1346,23 @@ __myevic__ void EventHandler()
 							break;
 
                                                 case 4:
-							if ( ++dfAPT3 > 9 ) dfAPT3 = 0;
+							if ( ++dfAPT3 > 11 ) dfAPT3 = 0;
 							break;
                                                         
                                                 case 5: //4:
-							if ( ++dfAPT > 9 ) dfAPT = 0;
+							if ( ++dfAPT > 11 ) dfAPT = 0;
 							break;
 
-                                                case 6: //5:
+                                                case 6: //5:        
+                                                        if ( NumBatteries > 1 )
+                                                        {
+                                                            if ( ++dfBattLine > 3 ) dfBattLine = 0;
+                                                        }
+                                                        else
+                                                        {
+                                                            if ( ++dfBattLine > 2 ) dfBattLine = 0;
+                                                        }
+/*
 							if ( !dfStatus.battpc )
 							{
 								dfStatus.battpc = 1;
@@ -1311,6 +1377,7 @@ __myevic__ void EventHandler()
 								dfStatus.battv = 0;
 								dfStatus.battpc = 0;
 							}
+*/
 							break;
 					}
 
@@ -1328,23 +1395,25 @@ __myevic__ void EventHandler()
 
 						case 4:
 							PowerPlus( &dfPower, AtoMinPower, AtoMaxPower );
-							dfVWVolts = GetAtoVWVolts( dfPower );
-							if ( ConfigIndex < 10 && !AtoError && AtoRez )
-							{
-								dfSavedCfgPwr[ConfigIndex] = dfPower;
-							}
+							dfVWVolts = GetAtoVWVolts( dfPower, AtoRez );
+                                                        dfVVLockedVolt = GetAtoVWVolts( dfPower, dfResistance );
+							//if ( ConfigIndex < 10 && !AtoError && AtoRez )
+							//{
+							//	dfSavedCfgPwr[ConfigIndex] = dfPower;
+							//}
 							break;
 
-						case 6:
+						case 6: // +
 							if ( ConfigIndex < 10 && !AtoError && AtoRez )
 							{
 								spwr = dfSavedCfgPwr[ConfigIndex];
-								spwr -= spwr % 10;
-								spwr += 10;
+								spwr -= spwr % WattsInc; //10;
+								spwr += WattsInc; //10;
 								if ( spwr > AtoMaxPower ) spwr = AtoMaxPower;
 
 								dfSavedCfgPwr[ConfigIndex] = spwr;
-								dfVWVolts = GetAtoVWVolts( spwr );
+								dfVWVolts = GetAtoVWVolts( spwr, AtoRez );
+                                                                //dfPower = spwr;
 							}
 							break;
 
@@ -1355,13 +1424,13 @@ __myevic__ void EventHandler()
 
 				}
 
-	            MainView();
-	            if ( KeyTicks >= 5 )
-	            {
+                                MainView();
+                                if ( KeyTicks >= 5 )
+                                {
 					gFlags.draw_edited_item = 1;
-	                DrawScreen();
-	            }
-	            UpdateDFTimer = 50;
+                                        DrawScreen();
+                                }
+                                UpdateDFTimer = 50;
 			}
 
 			break;

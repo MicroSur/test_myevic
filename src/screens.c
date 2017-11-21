@@ -18,7 +18,7 @@ uint16_t	ScreenDuration;
 uint16_t	ScreenRefreshTimer;
 
 //ScrSaveTimes 3 first in sec
-const uint8_t ScrSaveTimes[8] = { 5, 15, 30, 1, 5, 15, 30, 0 }; //{ 1, 2, 5, 10, 15, 20, 30, 0 };
+const uint8_t ScrSaveTimes[8] = { 5, 15, 30, 1, 5, 15, 30, 0 }; //, 255 }; //{ 1, 2, 5, 10, 15, 20, 30, 0 };
 const uint8_t ScrMainTimes[6] = { 30, 60, 5, 10, 15, 20 };
 
 uint8_t		EditItemIndex;
@@ -48,7 +48,7 @@ __myevic__ void DrawScreen()
 	static uint16_t	CurrentFD = 0;
         static uint8_t scrSaveOnce = 1;
 
-	if ( Screen == 2 && FireDuration && FireDuration != CurrentFD )
+	if ( ( !PE0 || AutoPuffTimer ) && Screen == 2 && FireDuration && FireDuration != CurrentFD )
 	{
 		CurrentFD = FireDuration;
 		//ScreenDuration = ISMODETC(dfMode) ? 1 : 2;
@@ -58,7 +58,8 @@ __myevic__ void DrawScreen()
 	}
 	else if ( ScreenRefreshTimer && !--ScreenRefreshTimer )
 	{
-		gFlags.refresh_display = 1;
+		if ( Screen != 2 ) 
+                    gFlags.refresh_display = 1;
 	}
 
 	if ( gFlags.refresh_display )
@@ -78,10 +79,20 @@ __myevic__ void DrawScreen()
 				break;
 
 			case  2: // Firing
-				if ( !dfStealthOn )
+
+				if ( !dfStealthOn && !gFlags.MainContrast )
 				{
-					ShowMainView();
-				}
+                                        DisplaySetContrast( dfContrast );
+                                        gFlags.MainContrast = 1;
+                                }
+                                else if ( dfStealthOn == 2 && gFlags.MainContrast )
+                                {
+                                        DisplaySetContrast( dfContrast2 );
+                                        gFlags.MainContrast = 0;
+                                }
+                                                                    
+                                if ( dfStealthOn != 1 ) ShowMainView();
+
 				break;
 
 			case  5: // charge screen
@@ -102,8 +113,16 @@ __myevic__ void DrawScreen()
 			case 21: // Atomizer Short
 				ShowAtoShort();
 				break;
-
-				case 22: // Atomizer Low
+                                
+                        case 70: // Atomizer Short Current
+				ShowAtoShortCurrent();
+				break;
+                                
+                        case 71: // Atomizer Short Bad
+				ShowAtoShortBad();
+				break;
+                                
+			case 22: // Atomizer Low
 				ShowAtoLow();
 				break;
 
@@ -131,9 +150,9 @@ __myevic__ void DrawScreen()
 				ShowKeyUnLock();
 				break;
 
-			case 37: // Board Temp
-				ShowBoardTemp();
-				break;
+			//case 37: // Board Temp
+			//	ShowBoardTemp();
+			//	break;
 
 			case 40: // Stealth ON/OFF
 				ShowStealthMode();
@@ -169,18 +188,25 @@ __myevic__ void DrawScreen()
 
 			case 60: // Screen Saver
                             
+                            if ( dfStatus.off )
+                            {
+                                    DisplaySetContrast( dfContrast ); //main contrast in off state fire clock 
+                                    gFlags.MainContrast = 1;
+                            }
+                            else
+                            {
                                 if ( gFlags.MainContrast )
                                 {
                                     DisplaySetContrast( dfContrast2 );
                                     gFlags.MainContrast = 0;
                                 }
- 
+                            }
 				ShowScreenSaver();
 				break;
 
-			case 100:
-				ShowInfos();
-				break;
+			//case 100:
+			//	ShowInfos();
+			//	break;
 
 			case 101:
 				ShowContrast();
@@ -209,7 +235,11 @@ __myevic__ void DrawScreen()
 			case 107:
 				ShowPowerCurve();
 				break;
-			
+                                
+                        case EVENT_SET_JOULES: //scr = event
+				ShowSetJoules();
+				break;        
+                                                               
 			default:
 				break;
 		}
@@ -217,13 +247,25 @@ __myevic__ void DrawScreen()
 		DisplayRefresh();
 	}
 
-if ( gFlags.debug & 1 )
-{
-        DrawValue( 0, 108, Screen, 0, 0x01, 0 );
-        DrawValue( 20, 108, SleepTimer, 0, 0x01, 0 );
-        DrawValueRight( 64, 108, ScreenDuration, 0, 0x01, 0 );
+
+
+//if ( gFlags.debug & 1 )
+        
+/*
+DrawValue( 0, 108, Screen, 0, 0x01, 0 );
+//        DrawValue( 20, 108, LastEvent, 0, 0x01, 0 );
+        //DrawValue( 20, 108, SleepTimer, 0, 0x01, 0 );
+DrawValueRight( 38, 108, gFlags.inverse, 0, 0x01, 0 );
+DrawValueRight( 64, 108, ScreenDuration, 0, 0x01, 0 );
+        //DrawValueRight( 64, 108, PreheatDelay, 0, 0x01, 0 );
+        
+        //DrawValue( 0, 0, KeyUpTimer, 0, 0x01, 2 ); //KeyUpTimer
+        //dfResistance AtoRez dfTempAlgo
+//        DrawValue( 0, 0, dfTempAlgo, 0, 0x01, 0 ); //NextPreheatTimer UserInputs dfTempAlgo AutoPuffTimer
+//        DrawValueRight( 64, 0, AtoRez, 0, 0x01, 0 ); //UserInputs LastInputs TargetVolts
         DisplayRefresh();
-}
+*/
+
         
 	if ( ( Screen == 1 || Screen == 60 ) && ( ScreenDuration <= 4 ) )
 	{
@@ -237,7 +279,7 @@ if ( gFlags.debug & 1 )
 	{
 		FadeOutTimer = 0;
 		//DisplaySetContrast( dfContrast );
-                gFlags.MainContrast = 0; //need for unterrupt fading
+                gFlags.MainContrast = 0; //need for interrupt fading
 		gFlags.fading = 0;
 	}
 
@@ -257,7 +299,7 @@ if ( gFlags.debug & 1 )
 	if ( ScreenDuration && --ScreenDuration )
 		return;
 
-	switch ( Screen ) // exit from screens 
+	switch ( Screen ) //                EXIT from screens 
 	{
 		case   0: // Black
 			if ( dfStatus.off )
@@ -265,7 +307,7 @@ if ( gFlags.debug & 1 )
 			else
 			{
 				if (( !gFlags.firing )
-				&&	( !dfStealthOn )
+				&&	( dfStealthOn != 1 )
 				&&	( SleepTimer > 0 )
 				&&	( dfScreenSaver > 0 )
 				&&	( GetScreenProtection() > 0 )
@@ -282,7 +324,7 @@ if ( gFlags.debug & 1 )
 		case   2: // Firing
 		case  28: // Key Lock
 		case  40: // Stealth ON/OFF
-			if ( dfStealthOn )
+			if ( dfStealthOn == 1)
 			{
 				Screen = 0;
 				SleepTimer = 18000;
@@ -329,6 +371,8 @@ if ( gFlags.debug & 1 )
 		case  56: // Check Battery
 		case  57: // Check USB Adapter
 		case  58: // Charge Error
+                case  70: // Atomizer Short current error
+                case  71: // Atomizer Short contacts check
 			MainView();
 			break;
 
@@ -339,6 +383,7 @@ if ( gFlags.debug & 1 )
 		case 105: // Set Time
 		case 106: // Set Date
 		case 107: // Power Curve
+                case EVENT_SET_JOULES:    
 			EditModeTimer = 0;
 			gFlags.edit_capture_evt = 0;
 			gFlags.edit_value = 0;
@@ -356,7 +401,7 @@ if ( gFlags.debug & 1 )
 			{
 				ChargeView();
 
-				if ( dfStealthOn )
+				if ( dfStealthOn == 1 || !gFlags.screen_on )
 				{
 					ScreenDuration = 0;
 				}
@@ -370,21 +415,30 @@ if ( gFlags.debug & 1 )
                         
                         scrSaveOnce = 1;
 			break;
-
+    
 		case  60: // Screen Saver
 			if ( gFlags.battery_charging )
 			{
 				ChargeView();
 
-				if ( dfStealthOn )
+				if ( dfStealthOn == 1 || !gFlags.screen_on )
 				{
 					ScreenDuration = 0;
 				}
 			}
 			else
 			{
+                            //if ( ScrSaveTimes[dfScreenProt] == 255 )
+                                    //    if ( dfStatus.off )
+                            //{
+                            //    Screen = 60;
+				//ScreenDuration = GetScreenProtection();
+                            //}
+                            //else
+                            //{
 				Screen = 0;
 				SleepTimer = 18000; //0
+                            //}
 				gFlags.refresh_display = 1;
 			}
 			break;
@@ -402,11 +456,11 @@ __myevic__ uint16_t GetScreenProtection()
 {
     if ( dfScreenProt < 3 ) 
     {
-        return ( ScrSaveTimes[dfScreenProt] );
+        return ( ScrSaveTimes[dfScreenProt] ); //in sec
     }
     else
     {
-        return ( 60 * ScrSaveTimes[dfScreenProt] );
+        return ( 60 * ScrSaveTimes[dfScreenProt] );  //in min
     }
 }
 
@@ -455,25 +509,30 @@ __myevic__ void ChargeView()
 	Screen = 5;
 	gFlags.refresh_display = 1;
 	ScreenDuration = 5;
+        gFlags.screen_on = 1; //if ( dfStealthOn != 1 )
 }
 
 
 //=========================================================================
 
+/*
 __myevic__ void ShowInfos()
 {
 	uint8_t strbuf[20];
 
 	// TODO : infos page
 	convert_string1( strbuf, "Ferox" );
-	DrawStringCentered( strbuf, 82 );
-	convert_string1( strbuf, "was" );
+	DrawStringCentered( strbuf, 71 );
+        convert_string1( strbuf, "MicroSur" );
+        DrawStringCentered( strbuf, 82 );
+	convert_string1( strbuf, "were" );
 	DrawStringCentered( strbuf, 92 );
 	convert_string1( strbuf, "here" );
 	DrawStringCentered( strbuf, 102 );
 
 	return;
 }
+*/
 
 //=========================================================================
 
@@ -530,17 +589,18 @@ __myevic__ void ShowRTCSpeed()
 	DrawHLine( 0, 16, 63, 1 );
 
 	GetRTC( &rtd );
-	DrawTimeSmall( 10, 25, &rtd, 0x1F );
+	//DrawTimeSmall( 10, 25, &rtd, 0x1F );
+        DrawTime( 3, 25, &rtd, 0x1F );
 
 	if ( gFlags.has_x32 )
 	{
-		DrawString( String_X32, 11, 40 );
-		DrawString( String_ON, 37, 40 );
+		DrawString( String_X32, 11, 48 );
+		DrawString( String_ON, 37, 48 );
 	}
 	else
 	{
 		cs = RTCGetClockSpeed();
-		DrawValue( 12, 40, cs, 0, 0x1F, 5 );
+		DrawValue( 12, 48, cs, 0, 0x1F, 5 );
 	}
 }
 
@@ -549,7 +609,8 @@ __myevic__ void ShowRTCSpeed()
 
 __myevic__ int IsClockOnScreen()
 {
-	return (  ((( Screen == 1 ) || ( Screen == 2 )) && ( ( dfAPT == 8 ) || ( dfAPT3 == 8 ) ) )
+        return (  ( ( Screen == 1 ) && ( ( dfAPT == 8 ) || ( dfAPT3 == 8 ) ) )
+	//return (  ((( Screen == 1 ) || ( Screen == 2 )) && ( ( dfAPT == 8 ) || ( dfAPT3 == 8 ) ) )
 			|| (( Screen == 1 ) && ( dfStatus.clock ))
 			|| (( Screen == 60 ) && ( dfScreenSaver == SSAVER_CLOCK ))
 			||  ( Screen == 103 )
@@ -562,74 +623,129 @@ __myevic__ int IsClockOnScreen()
 //----- (000067C8) --------------------------------------------------------
 __myevic__ void ShowBattery()
 {
-	if ( BLINKITEM(6) ) return;
+        int i;	
+        int x0;
+        int y0;
+        int y;
+        
+        if ( BLINKITEM(6) ) return;
 
-	if ( dfStatus.battpc )
-	{
-		if ( dfStatus.battv )
+        if ( dfBattLine == 2 )
 		{
 			uint16_t bv = gFlags.firing ? RTBattVolts : BatteryVoltage;
 			DrawValueRight(	20, 118, bv, 2, 0x0B, 0 );
 			DrawImage( 21, 118, 0x7D );
 		}
-		else
+	else if ( dfBattLine == 1 )
 		{
 			DrawValueRight(	17, 118, BatteryPercent, 0, 0x0B, 0 );
 			DrawImage( 18, 118, 0xC2 );
 		}
-	}
 
 	if ( gFlags.battery_10pc && !gFlags.battery_charging )
 	{
 		if ( gFlags.draw_battery )
 		{
-			if ( dfStatus.battpc )
+			if ( dfBattLine == 1 || dfBattLine == 2 )
 			{
-				DrawImage( 30, 114, 0xE2 );
+				DrawImage( 30, 114, 0xE2 ); //small empty
 			}
-			else
+			else if ( dfBattLine == 0 )
 			{
-				DrawImage( 8, 114, 0xC4 );
+				DrawImage( 8, 114, 0xC4 ); //big empty
 			}
+                        else if ( dfBattLine == 3 )
+                        {
+                                DrawImage( 1, 114, 0xE2 ); //2 small empty
+                                DrawImage( 33, 114, 0xE2 );    
+                        }
 		}
 	}
 	else if ( gFlags.draw_battery_charging && gFlags.battery_charging )
 	{
-		if ( dfStatus.battpc )
+		if ( dfBattLine == 1 || dfBattLine == 2 )
 		{
-			DrawImage( 30, 114, 0xE3 );
+			DrawImage( 30, 114, 0xE3 ); //small charging
 		}
-		else
+		else if ( dfBattLine == 0 )
 		{
-			DrawImage( 8, 114, 0xC5 );
+			DrawImage( 8, 114, 0xC5 ); //big charging
+		}
+                else if ( dfBattLine == 3 )
+		{
+			DrawImage( 1, 114, 0xE3 ); //2 small charging
+                        DrawImage( 33, 114, 0xE3 );
 		}
 	}
 	else
 	{
-		if ( dfStatus.battpc )
+		if ( dfBattLine == 1 || dfBattLine == 2 )
 		{
-			DrawImage( 30, 114, 0xE2 );
+			DrawImage( 30, 114, 0xE2 ); // 1 small empty
 			if ( gFlags.batteries_ooe && gFlags.draw_battery )
 			{
-				DrawString( String_BAL_s, 35, 117 );
+				//DrawString( String_BAL_s, 35, 117 );
+                                DrawImage( 37, 117, 0xC6 );
+                                //DrawHLine ( 32, 117, 57, 1 ); //fill space after drawstring
 			}
 			else if ( BatteryTenth )
 			{
 				DrawFillRectLines( 32, 119, (25 * BatteryTenth / 10 + 31), 123, 1 );
 			}
 		}
-		else
+		else if ( dfBattLine == 0 )
 		{
 			DrawImage( 8, 114, 0xC4 );
 			if ( gFlags.batteries_ooe && gFlags.draw_battery )
 			{
-				DrawString( String_BALANCE_s, 10, 117 );
+				//DrawString( String_BALANCE_s, 10, 117 );
+                                DrawImage( 23, 117, 0xC6 );
+                                //DrawHLine ( 9, 117, 50, 1 );
 			}
 			else if ( BatteryTenth )
 			{
 				DrawFillRectLines( 10, 119, (4 * BatteryTenth + 9), 123, 1 );
 			}
 		}
+		else if ( dfBattLine == 3 )
+		{
+                        DrawImage( 1, 114, 0xE2 ); //2 small empty
+                        DrawImage( 33, 114, 0xE2 ); 
+			if ( gFlags.batteries_ooe && gFlags.draw_battery )
+			{
+				//DrawString( String_BAL_s, 37, 117 );
+                                DrawImage( 40, 117, 0xC6 );
+                                //DrawHLine ( 34, 117, 59, 1 ); //fill space after drawstring
+			}
+			else 
+			{
+                            for ( i = 0 ; i < NumBatteries ; ++i )
+                            {
+                                if ( i == 0 || i == 1 )
+                                {
+                                    y0 = 118;
+                                    y = 120;
+                                    if ( i == 0 ) x0 = 2;
+                                    else x0 = 34;
+                                }
+                                else
+                                {
+                                    y0 = 122;
+                                    y = 124;
+                                    if ( i == 2 ) x0 = 2;
+                                    else x0 = 34;   
+                                }
+                
+                                if ( BatteryTenthAll[i] )
+                                {
+                                    if ( NumBatteries == 2 )
+                                        DrawFillRectLines( x0+1, y0+1, (25 * BatteryTenthAll[i] / 10 + x0), 123, 1 );               
+                                    else
+                                        DrawFillRect( x0, y0, (25 * BatteryTenthAll[i] / 10 + x0+2), y, 1 );               
+                                }
+                            }				
+			}
+		}                
 	}
 }
 
@@ -638,7 +754,7 @@ __myevic__ void ShowBattery()
 //----- (00006764) --------------------------------------------------------
 __myevic__ void ShowBatCharging()
 {
-	if ( dfStealthOn && ScreenDuration == 0 )
+	if ( ( dfStealthOn == 1 && ScreenDuration == 0 ) || !gFlags.screen_on )
 	{
 		return;
 	}
@@ -655,41 +771,41 @@ __myevic__ void ShowBatCharging()
 			break;
 	}
 */
-
-	if ( dfStatus.battpc )
+  
+	if ( dfBattLine == 0 )
+	{
+		DrawImage( 8, 114, 0xC4 );
+	}
+	else
 	{
 		DrawValueRight(	18, 118, BatteryPercent, 0, 0x0B, 0 );
 		DrawImage( 19, 118, 0xC2 );
 		DrawImage( 30, 114, 0xE2 );
 	}
-	else
-	{
-		DrawImage( 8, 114, 0xC4 );
-	}
-
+        
 	if ( BatteryTenth != 10 )
 	{
 		if ( BatAnimLevel )
 		{
-			if ( dfStatus.battpc )
-			{
-				DrawFillRectLines( 32, 119, (25 * BatAnimLevel / 10 + 31), 123, 1 );
-			}
-			else
+			if ( dfBattLine == 0 )
 			{
 				DrawFillRectLines( 10, 119, (4 * BatAnimLevel + 9), 123, 1 );
+			}
+                        else
+			{
+				DrawFillRectLines( 32, 119, (25 * BatAnimLevel / 10 + 31), 123, 1 );
 			}
 		}
 	}
 	else if ( gFlags.draw_battery_charging )
 	{
-		if ( dfStatus.battpc )
-		{
-			DrawFillRectLines( 32, 119, 56, 123, 1 );
-		}
-		else
+		if ( dfBattLine == 0 )
 		{
 			DrawFillRectLines( 10, 119, 49, 123, 1 );
+		}
+                else
+		{
+			DrawFillRectLines( 32, 119, 56, 123, 1 );
 		}
 	}
 
@@ -754,11 +870,13 @@ __myevic__ void ShowBattVolts()
 
 //=========================================================================
 //----- (00006874) --------------------------------------------------------
+/*
 __myevic__ void ShowBoardTemp()
 {
 	DrawStringCentered( String_Temp, 88 );
 	DrawValue( 16, 102, BoardTemp, 0, 0x48, 2 );
 }
+*/
 
 
 //=========================================================================
@@ -767,14 +885,15 @@ __myevic__ void ShowVersion()
 {
 	uint8_t buf[12];
 
-	DrawStringCentered( String_myevic, 32 );
+        DrawStringCentered( String_SME, 13 );
+	DrawStringCentered( String_myevic, 24 );
 
-	DrawStringCentered( String_Build, 55 );
+	DrawStringCentered( String_Build, 47 );
 	Value2Str( buf, __BUILD1, 0, 0x1F, 0 );
-	DrawStringCentered( buf, 69 );
+	DrawStringCentered( buf, 61 );
 
-	DrawStringCentered( String_Version, 88 );
-	DrawValue( 6, 102, FWVERSION, 2, 0x48, 3 );
+	DrawStringCentered( String_Version, 80 );
+	DrawValue( 5, 94, FWVERSION, 2, 0x48, 3 );
 }
 
 
@@ -821,7 +940,13 @@ __myevic__ void ShowNewCoil()
 __myevic__ void ShowStealthMode()
 {
 	DrawStringCentered( String_Stealth, 88 );
-	DrawStringCentered( dfStealthOn ? String_ON : String_OFF, 102 );
+        //DrawStringCentered( dfStealthOn ? String_ON : String_OFF, 102 );
+        if ( !dfStealthOn )
+            DrawStringCentered( String_OFF, 102 );
+        else if ( dfStealthOn == 1 )
+            DrawStringCentered( String_ON, 102 );
+        else
+            DrawStringCentered( String_Contrast, 102 );
 }
 
 
@@ -849,6 +974,18 @@ __myevic__ void ShowAtoShort()
 {
 	DrawStringCentered( String_Atomizer, 88 );
 	DrawStringCentered( String_Short, 102 );
+}
+__myevic__ void ShowAtoShortCurrent()
+{
+    //from read ato current 70
+	DrawStringCentered( String_Atomizer, 88 );
+	DrawStringCentered( String_Error, 102 );
+}
+__myevic__ void ShowAtoShortBad()
+{
+    //bad contacts 71
+        DrawStringCentered( String_Check, 88 );
+	DrawStringCentered( String_Atomizer, 102 );
 }
 
 
@@ -927,29 +1064,27 @@ __myevic__ void ShowRTCAdjust()
 	DrawHLine( 0, 16, 63, 1 );
 
 	GetRTC( &rtd );
-	DrawTime( 5, 40, &rtd, 0x1F );
+	DrawTime( 3, 40, &rtd, 0x1F );
 }
 
 
 //=========================================================================
 __myevic__ void ShowScreenSaver()
 {
+        if ( dfStatus.off )
+        {
+                DrawDigitClock( 82, 0 );
+                DrawClock( 0 );
+                gFlags.refresh_display = 1;
+                return;
+        }
+
 	switch ( dfScreenSaver )
 	{
 		case SSAVER_CLOCK:
                         
-                        DrawDigitClock( 80 );
+                        DrawDigitClock( 82, 0 );
                         DrawClock( 0 );           
-/*
-			if ( dfStatus.digclk )
-			{
-				DrawDigitClock( 40 );
-			}
-			else
-			{
-				DrawClock( 25 );
-			}
-*/
 			break;
 
 		case SSAVER_3D:
@@ -980,13 +1115,23 @@ __myevic__ void ShowScreenSaver()
 
 		default:
 			break;
-	}
+        }
 }
 
 
 //=========================================================================
 __myevic__ void AnimateScreenSaver()
 {
+/*
+        if ( dfStatus.off )
+        {
+                DrawDigitClock( 82, 0 );
+                DrawClock( 0 );
+                gFlags.refresh_display = 1;
+                return;
+        }
+*/
+            
 	switch ( dfScreenSaver )
 	{
 		case SSAVER_3D:
@@ -1006,15 +1151,52 @@ __myevic__ void AnimateScreenSaver()
 	}
 }
 
+//=========================================================================
+__myevic__ void ShowSetJoules()
+{
+        uint32_t vv, t;
+        
+	DrawString( String_mlkJ, 4, 6 );
+	DrawHLine( 0, 16, 63, 1 );
+        
+        DrawValueRight( 45, 24, dfVVRatio, 0, 0x1F, 0 );
+
+        vv = ( MilliJoules / 10 ) / 3600;
+        if ( vv > 9999 ) vv = 9999;                        
+        DrawImage( 2, 75, 0xDE ); //energy
+        DrawValueRight( 52, 73, vv, 2, 0x1F, 0 );
+        DrawImageRight( 62, 73, 0x67 ); //wh
+   
+   	vv = dfVVRatio * ( MilliJoules / 1000 ) / 1000;
+	vv /= 10;
+	if ( vv > 9999 ) vv = 9999;
+        DrawImage( 2, 43, 0xF9 ); //ml
+        DrawValueRight( 52, 41, vv, 2, 0x1F, 0 );
+        DrawImageRight( 61, 43, 0xCD ); //flask
+
+        // Elasped seconds since last VV reset
+        t = RTCGetEpoch( 0 );
+        t -= RTCReadRegister( RTCSPARE_VV_BASE );
+        vv = vv * 86400 / ( t ? : 1 );
+        DrawImage( 2, 59, 0xF3 ); //mld
+        DrawValueRight( 52, 57, vv, 2, 0x1F, 0 );
+        DrawImageRight( 61, 59, 0xCD ); //flask
+
+        //DrawStringCentered( String_Fire, 53 );
+	//DrawStringCentered( String_Exit, 64 );
+}
 
 //=========================================================================
 __myevic__ void ShowSetTime()
 {
-	DrawString( String_SetTime, 4, 6 );
+	DrawString( String_Time, 4, 6 );
 	DrawHLine( 0, 16, 63, 1 );
 
-	DrawTime( 6, 46, &SetTimeRTD, 0x1F & ~( 1 << ( EditItemIndex << 1 ) ) );
+	DrawTime( 3, 46, &SetTimeRTD, 0x1F & ~( 1 << ( EditItemIndex << 1 ) ) );
 	DrawDate( 4, 64, &SetTimeRTD, 0x1F );
+        
+        DrawStringCentered( String_LongFire, 103 );
+	DrawStringCentered( String_Save, 114 );
 }
 
 
@@ -1036,11 +1218,14 @@ __myevic__ void ShowSetDate()
 
 	GetRTC( &rtd );
 
-	DrawString( String_SetDate, 4, 6 );
+	DrawString( String_Date, 4, 6 );
 	DrawHLine( 0, 16, 63, 1 );
 
-	DrawTime( 6, 46, &rtd, 0x1F );
+	DrawTime( 3, 46, &rtd, 0x1F );
 	DrawDate( 4, 64, &SetTimeRTD, col );
+        
+        DrawStringCentered( String_LongFire, 103 );
+	DrawStringCentered( String_Save, 114 );
 }
 
 

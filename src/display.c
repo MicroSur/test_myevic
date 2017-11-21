@@ -88,7 +88,12 @@ __myevic__ void InitDisplay()
 			DrawPoint = SSD1327_Plot+1;
 			break;
 	}
-	DisplaySetContrast( dfContrast );
+        
+        if ( gFlags.MainContrast )
+            DisplaySetContrast( dfContrast );
+        else
+            DisplaySetContrast( dfContrast2 );
+        
 	DisplaySetInverse( dfStatus.invert );
 	DisplaySetFont();
 
@@ -127,6 +132,7 @@ __myevic__ void DisplaySetInverse( const uint8_t i )
 
 //=========================================================================
 
+/*
 __myevic__ void DrawTimeSmall( int x, int y, S_RTC_TIME_DATA_T *rtd, int colors )
 {
 	if ( gFlags.draw_edited_item ) colors = 0x1F;
@@ -137,9 +143,11 @@ __myevic__ void DrawTimeSmall( int x, int y, S_RTC_TIME_DATA_T *rtd, int colors 
 	if (colors&0x02) DrawImage( x+27, y, 0xD7 );
 	if (colors&0x01) DrawValue( x+30, y, rtd->u32Second, 0, 0x0B, 2 );
 }
+*/
 
 __myevic__ void DrawTime( int x, int y, S_RTC_TIME_DATA_T *rtd, int colors )
 {
+    //24h only
 	if ( gFlags.draw_edited_item ) colors = 0x1F;
 
 	if (colors&0x10) DrawValue( x   , y, rtd->u32Hour, 0, 0x1F, 2 );
@@ -168,9 +176,16 @@ __myevic__ uint8_t dayofweek(uint32_t d, uint32_t m, uint32_t y) {
 
 __myevic__ void DrawDate( int x, int y, S_RTC_TIME_DATA_T *rtd, int colors )
 { 
+    	//uint8_t separator;
+	//uint8_t	dayoffset;
+	//uint8_t	monthoffset;
+	//uint8_t	yearoffset;
+	//uint8_t sep1offset;
+	//uint8_t sep2offset;
+        
 	const datefmt_t format[] =
 	{
-		{ 0xC1,  0, 16, 32, 12, 28 },
+		{ 0xC1,  0, 16, 32, 13, 29 },
 		{ 0xD6, 16,  0, 32, 12, 28 },
 		{ 0xD6,  0, 16, 32, 12, 28 },
 		{ 0xD9, 44, 28,  0, 24, 40 }
@@ -188,6 +203,12 @@ __myevic__ void DrawDate( int x, int y, S_RTC_TIME_DATA_T *rtd, int colors )
         
         y += 13;
             //switch ( rtd->u32DayOfWeek )
+        
+        const uint8_t *WEEKS[] = { String_Sunday, String_Monday, String_Tuesday, 
+                            String_Wednesday, String_Thursday, String_Friday, 
+                            String_Saturday};
+        DrawStringCentered( WEEKS[dayofweek ( rtd->u32Day, rtd->u32Month, rtd->u32Year )], y );        
+/*
         switch ( dayofweek ( rtd->u32Day, rtd->u32Month, rtd->u32Year ) )
 	{
 		case 0:
@@ -212,6 +233,7 @@ __myevic__ void DrawDate( int x, int y, S_RTC_TIME_DATA_T *rtd, int colors )
 			DrawStringCentered( String_Saturday, y );
 			break;
 	}       
+*/
 }
 
 
@@ -364,6 +386,40 @@ __myevic__ uint32_t DrawImage( const int x, const int y, const uint8_t img )
 	}
 }
 
+__myevic__ uint32_t DrawImageRight( const int x, const int y, const uint8_t img )
+{
+	switch ( DisplayModel )
+	{
+		case 0:
+			return SSD1306_Image( x - Images[img - 1]->width, y, img, 0 );
+
+		case 1:
+			return SSD1327_Image( x - Images[img - 1]->width, y, img, 0 );
+
+		default:
+			return 0;
+	}
+}
+
+/*
+__myevic__ void DrawImgImgImg( const int x, const int y, const uint8_t img1, const uint8_t img2, const uint8_t img3 )
+{
+	switch ( DisplayModel )
+	{
+		case 0:
+			SSD1306_Image( x, y, img1, 0 );
+                        SSD1306_Image( x + Images[img1 - 1]->width, y, img2, 0 );
+                        SSD1306_Image( x + Images[img2 - 1]->width, y, img3, 0 );
+
+
+		case 1:
+                        SSD1327_Image( x, y, img1, 0 );
+                        SSD1327_Image( x + Images[img1 - 1]->width, y, img2, 0 );
+                        SSD1327_Image( x + Images[img2 - 1]->width, y, img3, 0 );
+	}
+}
+*/
+
 //=========================================================================
 //----- (000057B8) --------------------------------------------------------
 __myevic__ uint32_t DrawImageInv( const int x, const int y, const uint8_t img )
@@ -476,9 +532,9 @@ __myevic__ uint8_t* Value2Str( uint8_t *str, int v, int dp, uint8_t z, int nd )
 			case 0x29:
 				dot = 0xDF;
 				break;
-			case 0x33:
-				dot = 0xF1;
-				break;
+			//case 0x33:
+			//	dot = 0xF1;
+			//	break;
 			case 0x3D:
 				dot = 0x47;
 				break;

@@ -30,7 +30,7 @@
 // Those addresses are hardcoded in Joyetech's custom logo utility so
 //  we have to hardcode them here too.
 #define DATAFLASH_LOGO_SIZE			0x200
-#define DATAFLASH_LOGO_1327_BASE	0x19000
+#define DATAFLASH_LOGO_1327_BASE	0x19000 // 102400
 #define DATAFLASH_LOGO_1306_BASE	0x19200
 
 // To read product ID
@@ -38,7 +38,7 @@
 #define LDROM_SIZE 0x1000
 
 // NFE Magic Number
-#define DATAFLASH_NFE_MAGIC	0xFE
+//#define DATAFLASH_NFE_MAGIC	0xFE
 
 
 //=========================================================================
@@ -57,24 +57,24 @@ typedef struct
 /* 00000008 */	unsigned int nologo:1;      //lsls 0x1C 3-d bit for menu
 /* 00000010 */	unsigned int clock:1;       //lsls 0x1B 4
 /* 00000020 */	unsigned int vcom:1;        //lsls 0x1A
-/* 00000040 */	unsigned int storage:1;     //lsls 0x19
-/* 00000080 */	unsigned int dbgena:1;      //lsls 0x18
+/* 00000040 */	unsigned int autopuff:1;     //lsls 0x19 //was storage
+/* 00000080 */	unsigned int dbgena:1;      //lsls 0x18                     //not used
 
 /* 00000100 */	unsigned int x32off:1;      //lsls 0x17
 /* 00000200 */	unsigned int priopwr:1;     //lsls 0x16
 /* 00000400 */	unsigned int onewatt:1;     //lsls 0x15
 /* 00000800 */	unsigned int digclk:1;      //lsls 0x14
-/* 00001000 */	unsigned int battpc:1;      //lsls 0x13
+/* 00001000 */	unsigned int nbrc:1;      //lsls 0x13        new battery reset counters
 /* 00002000 */	unsigned int phpct:1;       //lsls 0x12
 /* 00004000 */	unsigned int wakeonpm:1;    //lsls 0x11
-/* 00008000 */	unsigned int font:1;        //lsls 0x10
+/* 00008000 */	unsigned int preheat:1;     //lsls 0x10  15 bit
 
-/* 00010000 */	unsigned int nfe:1;         //lsls 0x0F
+/* 00010000 */	unsigned int nfe:1;         //lsls 0x0F not used
 /* 00020000 */	unsigned int dfmt1:1;       //lsls 0x0E
 /* 00040000 */	unsigned int invert:1;      //lsls 0x0D
 /* 00080000 */	unsigned int vapedml:1;     //lsls 0x0C
 /* 00100000 */	unsigned int onedegree:1;   //lsls 0x0B
-/* 00200000 */	unsigned int battv:1;       //lsls 0x0A
+/* 00200000 */	unsigned int usbchghotoff:1;       //lsls 0x0A
 /* 00400000 */	unsigned int lsloff:1;      //lsls 0x09
 /* 00800000 */	unsigned int logomid:1;     //lsls 0x08  23-d bit
 
@@ -94,6 +94,10 @@ dfStatus_t;
 typedef struct
 {
 /* 00000001 */	unsigned int anim3d:1;         //lsls 0x1F  0-bit
+/* 00000002 */	unsigned int vapedjoules:1; 
+/* 00000004 */	unsigned int smart_ph:1;
+/* 00000008 */	unsigned int swap_mp:1;
+/* 00000010 */	unsigned int digclk2:1;
 }
 // Do not exceed 32 bits;
 dfStatus2_t;
@@ -115,7 +119,7 @@ typedef struct
 }
 dfBattery_t;
 
-#define PWR_CURVE_PTS	10
+#define PWR_CURVE_PTS	20 //10
 
 typedef struct
 {
@@ -137,25 +141,29 @@ typedef struct dfParams
 /* 0010 */	uint16_t	TCPower;
 /* 0012 */	uint16_t	VWVolts;
 /* 0014 */	uint8_t		APT;
-/* 0015 */	uint8_t		RezType;
-/* 0016 */	uint8_t		TempAlgo;
-/* 0017 */	uint8_t		IsCelsius;
+/* 0015 */	uint8_t		RezType;            // 1 2 may be in dfStatus bit
+/* 0016 */	uint8_t		TempAlgo;               // 1ni 2ti 3ss   4tcr for ni ti ss
+/* 0017 */	uint8_t		IsCelsius;          // may be in dfStatus bit
 /* 0018 */	uint16_t	Resistance;
 /* 001A */	uint16_t	RezTI;
 /* 001C */	uint16_t	RezNI;
 /* 001E */	uint8_t		RezLockedTI;
 /* 001F */	uint8_t		RezLockedNI;
-/* 0020 */	uint8_t		TiOn;			//	useless
-/* 0021 */	uint8_t		StealthOn;
-/* 0022 */	uint16_t	TempCoefsNI;
+/* 0020 */	uint8_t		MaxBoardTemp;	
+/* 0021 */	uint8_t		StealthOn;              // 0 1 2 (off on contrast)
+/* 0022 */	uint16_t	VVLockedVolt;            // for vvlite: cold rez locked volt
 /* 0024 */	dfBattery_t	Battery;
 /* 003A */	dfPCPoint_t	PwrCurve[PWR_CURVE_PTS];
-/* 004E */	uint8_t		Unused4E[38];
-/* 0074 */	uint16_t	TempCoefsTI;
+/* 004E */	//uint8_t		Unused4E[38];         //recheck for PWR_CURVE_PTS value /* 004E */ = 10 pts /* 0062 */ = 20 pts
+/* 0062 */	uint8_t		Unused4E[14];         //recheck for PWR_CURVE_PTS value /* 004E */ = 10 pts /* 0062 */ = 20 pts
+/* 0070 */      uint32_t	Joules;
+/* 0074 */	uint8_t         CurveRepeatTimer;            // 0.1s = 1 1s = 10...    was TempCoefsTi
+/* 0075 */	uint8_t         Unused75;  
 /* 0076 */	uint16_t	LEDColor;		//	former 2-bytes pad
 /* 0078 */	dfStatus_t	Status;
-/* 007C */	uint16_t	AtoRez;			//	useless
-/* 007E */	uint8_t		AtoStatus;		//	useless
+/* 007C */	uint8_t         BattLine;		//0-big,1-%+small,2-v+small,3-all_small	//was uint16_t	AtoRez;
+/* 007D */	uint8_t         AutoPuffTimer;
+/* 007E */	uint8_t		NewRezPerc;		//	was AtoStatus
 /* 007F */	uint8_t		ShuntRez;		//	former 1-byte pad
 /* 0080 */	uint16_t	RezSS;
 /* 0082 */	uint8_t		RezLockedSS;
@@ -172,7 +180,7 @@ typedef struct dfParams
 /* 00A6 */	uint16_t	SavedCfgPwr[10];
 /* 00BA */	uint16_t	FBBest;
 /* 00BC */	uint8_t		FBSpeed;
-/* 00BD */	uint8_t		BattPC;			//	unused
+/* 00BD */	uint8_t		ColdLockTemp;
 /* 00BE */	uint8_t		Contrast;
 /* 00BF */	uint8_t		ModesSel;
 /* 00C0 */	uint16_t	ClkRatio;
@@ -181,10 +189,11 @@ typedef struct dfParams
 /* 00C5 */	uint8_t		Clicks[4];
 /* 00C9 */	uint8_t		DimTimeout;
 /* 00CA */	uint8_t		BatteryModel;
-/* 00CB */	int8_t		UnusedCA[2];
-/* 00CD */	uint8_t		PreheatTime;
-/* 00CE */	uint16_t	PreheatPwr;
-/* 00D0 */	uint16_t	AtoPreheatPwr;
+//   ?? DataFlash.p.UnusedCA[3]                 CB 00
+/* 00CB */	uint16_t	USBMaxCharge;   //  CC
+/* 00CD */	uint8_t		PreheatTime;    //  CE
+/* 00CE */	uint16_t	PreheatPwr;     //  CF
+/* 00D0 */	uint16_t	BattVolt;
 /* 00D2 */	uint8_t		TCAlgo;
 /* 00D3 */	uint8_t		TCBoost;
 /* 00D4 */	uint16_t	TCRP[3];
@@ -193,15 +202,18 @@ typedef struct dfParams
 /* 00E2 */	uint8_t		Profile;
 /* 00E3 */	int8_t		BVOffset[4];
 /* 00E8 */	uint16_t	TTBest;
-/* 00EA */	uint8_t		TTSpeed;
-/* 00EB */	uint8_t		APT3;
-/* 00EC */	uint8_t		PuffsOff;
-/* 00ED */	uint8_t		HideLogo;
-/* 00EE */	int8_t		BoardTempCorr;
-/* 00EF */	uint8_t		Contrast2;
-/* 00F0 */	dfStatus2_t	Status2;
-/* 00F4 */      uint8_t         FireScrDuration;
-/* 00F5 */      uint8_t         dfObject3D;      
+/* 00EA */	uint8_t		TTSpeed;        //  EC
+/* 00EB */	uint8_t		APT3;           //  ED
+/* 00EC */	uint8_t		PuffsOff;       //  EE
+/* 00ED */	uint8_t		HideLogo;       //  EF
+/* 00EE */	int8_t		BoardTempCorr;  //  F0
+/* 00EF */	uint8_t		Contrast2;      //  F1
+/* 00F0 */	dfStatus2_t	Status2;        //  F4
+/* 00F4 */      uint8_t         FireScrDuration;//  F8
+/* 00F5 */      uint8_t         dfObject3D;     //  F9  
+/* 00F6 */      uint16_t        MaxPower;       //  FA 
+/* 00F8 */      uint16_t        MaxVolts;       //  FC
+/* 00FA */
 // stop on FF
 }
 dfParams_t;
@@ -345,17 +357,19 @@ extern dfStruct_t DataFlash;
 #define dfRezNI			DFP(RezNI)
 #define dfRezLockedTI	DFP(RezLockedTI)
 #define dfRezLockedNI	DFP(RezLockedNI)
-#define dfTiOn			DFP(TiOn)
+//#define dfTiOn			DFP(TiOn)
 #define dfStealthOn		DFP(StealthOn)
-#define dfTempCoefsNI	DFP(TempCoefsNI)
+#define dfVVLockedVolt	DFP(VVLockedVolt)
 #define dfBattery		DFP(Battery)
 #define dfPwrCurve		DFP(PwrCurve)
-#define dfTempCoefsTI	DFP(TempCoefsTI)
+#define dfJoules		DFP(Joules)
+#define dfCurveRepeatTimer	DFP(CurveRepeatTimer)
 #define dfLEDColor		DFP(LEDColor)
 #define dfStatus		DFP(Status)
 #define dfStatus2		DFP(Status2)
-#define dfAtoRez		DFP(AtoRez)
-#define dfAtoStatus		DFP(AtoStatus)
+#define dfBattLine		DFP(BattLine)  //was dfAtoRez
+#define dfAutoPuffTimer		DFP(AutoPuffTimer)
+#define dfNewRezPerc		DFP(NewRezPerc) //was dfAtoStatus
 #define dfShuntRez		DFP(ShuntRez)
 #define dfRezSS			DFP(RezSS)
 #define dfRezLockedSS	DFP(RezLockedSS)
@@ -374,7 +388,7 @@ extern dfStruct_t DataFlash;
 #define dfFBSpeed		DFP(FBSpeed)
 #define dfTTBest		DFP(TTBest)
 #define dfTTSpeed		DFP(TTSpeed)
-#define dfBattPC		DFP(BattPC)
+#define dfColdLockTemp		DFP(ColdLockTemp)
 #define dfContrast		DFP(Contrast)
 #define dfContrast2		DFP(Contrast2)
 #define Object3D		DFP(dfObject3D)
@@ -388,7 +402,7 @@ extern dfStruct_t DataFlash;
 #define dfBVOffset		DFP(BVOffset)
 #define dfPreheatTime	DFP(PreheatTime)
 #define dfPreheatPwr	DFP(PreheatPwr)
-#define dfAtoPreheatPwr	DFP(AtoPreheatPwr)
+#define dfBattVolt	DFP(BattVolt)
 #define dfTCAlgo		DFP(TCAlgo)
 #define dfTCBoost		DFP(TCBoost)
 #define dfTCRP			DFP(TCRP)
@@ -399,6 +413,10 @@ extern dfStruct_t DataFlash;
 #define dfHideLogo  		DFP(HideLogo)
 #define dfBoardTempCorr 	DFP(BoardTempCorr)
 #define dfFireScrDuration       DFP(FireScrDuration)
+#define dfMaxPower              DFP(MaxPower)
+#define dfMaxVolts              DFP(MaxVolts)
+#define dfUSBMaxCharge          DFP(USBMaxCharge)
+#define dfMaxBoardTemp          DFP(MaxBoardTemp)
 
 #define dfFWVersion		DFI(FWVersion)
 #define dffmcCID        DFI(fmcCID)
@@ -428,6 +446,8 @@ extern dfStruct_t DataFlash;
 extern uint8_t	UpdateDFTimer;
 extern uint8_t	UpdatePTTimer;
 extern uint8_t	DFMagicNumber;
+
+extern uint8_t	ScrFlip;
 
 //=========================================================================
 // Functions

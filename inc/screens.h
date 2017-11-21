@@ -14,7 +14,7 @@ extern uint16_t	ScreenRefreshTimer;
 extern uint8_t	HideLogo;
 extern uint8_t	ShowWeakBatFlag;
 extern uint8_t	BatAnimLevel;
-extern uint8_t	ShowProfNum;
+//extern uint8_t	ShowProfNum;
 extern uint8_t	SplashTimer;
 
 extern uint8_t	EditItemIndex;
@@ -24,7 +24,7 @@ extern const uint8_t ScrSaveTimes[8];
 extern const uint8_t ScrMainTimes[6];
 
 extern void DrawClock();
-extern void DrawDigitClock();
+extern void DrawDigitClock(int line, int infoline);
 
 enum {
 	SSAVER_NONE = 0,
@@ -44,7 +44,7 @@ extern void ShowMainView();
 extern void ShowBattery();
 extern void ShowBatCharging();
 extern void ShowBattVolts();
-extern void ShowBoardTemp();
+//extern void ShowBoardTemp();
 extern void ShowVersion();
 extern void ShowNewCoil();
 extern void ShowTCRSet();
@@ -52,6 +52,8 @@ extern void ShowStealthMode();
 extern void ShowDevTooHot();
 extern void ShowAtoLow();
 extern void ShowAtoShort();
+extern void ShowAtoShortCurrent();
+extern void ShowAtoShortBad();
 extern void ShowBatLow();
 extern void ShowBatLowLock();
 extern void ShowKeyLock();
@@ -66,6 +68,7 @@ extern void ShowRTCSpeed();
 extern void ShowRTCAdjust();
 extern void ShowScreenSaver();
 extern void ShowSetTime();
+extern void ShowSetJoules();
 extern void ShowSetDate();
 extern void ShowCheckBattery();
 extern void ShowCheckUSB();
@@ -89,7 +92,7 @@ extern int IsClockOnScreen();
 extern int IsMenuScreen();
 extern int SplashExists();
 
-
+extern int convert_string1( uint8_t *strbuf, const char *s );
 //==============================================================================
 // Strings
 
@@ -164,27 +167,27 @@ extern const uint8_t String_ClkSpeed[];
 extern const uint8_t String_ClkAdjust[];
 extern const uint8_t String_myevic[];
 extern const uint8_t String_Build[];
-extern const uint8_t String_mld[];
-extern const uint8_t String_ml[];
+//extern const uint8_t String_mld[];
+//extern const uint8_t String_ml[];
 extern const uint8_t String_Check[];
 extern const uint8_t String_Adapter[];
 extern const uint8_t String_Charge[];
 extern const uint8_t String_Error[];
 extern const uint8_t String_Imbalanced[];
 extern const uint8_t String_Batteries[];
-extern const uint8_t String_BALANCE_s[];
-extern const uint8_t String_BAL_s[];
+//extern const uint8_t String_BALANCE_s[];
+//extern const uint8_t String_BAL_s[];
 
 // from menus.c
 extern const uint8_t String_Menus[];
 extern const uint8_t String_Modes[];
-extern const uint8_t String_TEMP_NI_s[];
-extern const uint8_t String_TEMP_TI_s[];
-extern const uint8_t String_TEMP_SS_s[];
-extern const uint8_t String_TCR_s[];
-extern const uint8_t String_POWER_s[];
-extern const uint8_t String_BYPASS_s[]; 
-extern const uint8_t String_SMART_s[];
+//extern const uint8_t String_TEMP_NI_s[];
+//extern const uint8_t String_TEMP_TI_s[];
+//extern const uint8_t String_TEMP_SS_s[];
+//extern const uint8_t String_TCR_s[];
+//extern const uint8_t String_POWER_s[];
+//extern const uint8_t String_BYPASS_s[]; 
+//extern const uint8_t String_SMART_s[];
 extern const uint8_t String_Coils[];
 extern const uint8_t String_Zero_All[];
 extern const uint8_t String_Miscs[];
@@ -203,7 +206,7 @@ extern const uint8_t String_Expert[];
 extern const uint8_t String_USB[];
 extern const uint8_t String_HID[];
 extern const uint8_t String_COM[];
-extern const uint8_t String_DSK[];
+extern const uint8_t String_UCH_s[];
 extern const uint8_t String_DBG[];
 extern const uint8_t String_X32[];
 extern const uint8_t String_PCT[];
@@ -221,8 +224,8 @@ extern const uint8_t String_1Watt[];
 extern const uint8_t String_1C5F[];
 extern const uint8_t String_Hide[];
 extern const uint8_t String_Date[];
-extern const uint8_t String_SetTime[];
-extern const uint8_t String_SetDate[];
+//extern const uint8_t String_SetTime[];
+//extern const uint8_t String_SetDate[];
 extern const uint8_t String_WakeMP[];
 extern const uint8_t String_2[];
 extern const uint8_t String_3[];
@@ -232,7 +235,7 @@ extern const uint8_t String_OnOff[];
 extern const uint8_t String_ModePlus[];
 extern const uint8_t String_PPwr[];
 extern const uint8_t String_Clicks[];
-extern const uint8_t String_BAT[];
+//extern const uint8_t String_BAT[];
 extern const uint8_t String_GEN[];
 extern const uint8_t String_25R[];
 extern const uint8_t String_HG2[];
@@ -271,6 +274,7 @@ extern const uint8_t String_Isoca[];
 extern const uint8_t String_Square[];
 extern const uint8_t String_TIE[];
 extern const uint8_t String_Quartz[];
+extern const uint8_t String_Spinner[];
 extern const uint8_t String_B1[];
 extern const uint8_t String_B2[];
 extern const uint8_t String_B3[];
@@ -279,7 +283,7 @@ extern const uint8_t String_M1[];
 extern const uint8_t String_M2[];
 extern const uint8_t String_M3[];
 extern const uint8_t String_DEF[];
-extern const uint8_t String_UCH[];
+//extern const uint8_t String_UCH[];
 extern const uint8_t String_Algo[];
 extern const uint8_t String_Auto[];
 extern const uint8_t String_Sweet[];
@@ -306,6 +310,16 @@ extern const uint8_t String_Reset[];
 extern const uint8_t String_Splash[];
 extern const uint8_t String_PuffsOff[];
 extern const uint8_t String_FireScrDur[];
+extern const uint8_t String_Percent[];
+extern const uint8_t String_V[];
+extern const uint8_t String_Flash[];
+extern const uint8_t String_Ok[];
+extern const uint8_t String_SwapMP[];
+extern const uint8_t String_SME[];
+extern const uint8_t String_Cold[];
+extern const uint8_t String_New[];
+extern const uint8_t String_AutoFi[];
+extern const uint8_t String_ATime[];
 
 //from display.c
 extern const uint8_t String_Sunday[];
@@ -316,6 +330,10 @@ extern const uint8_t String_Thursday[];
 extern const uint8_t String_Friday[];
 extern const uint8_t String_Saturday[];
 extern const uint8_t String_Survival[];
+
+extern const uint8_t String_NewZC[];
+extern const uint8_t String_ZeroCnts[];
+extern const uint8_t String_Repeat[];
 
 //==============================================================================
 

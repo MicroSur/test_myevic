@@ -20,7 +20,7 @@
 
 volatile gFlags_t gFlags;
 uint8_t BoxModel;
-const uint8_t  MaxBoardTemp = 70;
+//const uint8_t  MaxBoardTemp = 70;
 
 //=========================================================================
 // Additional initialisations
@@ -153,10 +153,10 @@ void InitDevices()
 	CLK_SetCoreClock( CPU_FREQ );
 
 	// UART0 CLK = HXT/1
-	#if (ENABLE_UART)
-	CLK_EnableModuleClock( UART0_MODULE );
-	CLK_SetModuleClock( UART0_MODULE, CLK_CLKSEL1_UARTSEL_HXT, CLK_CLKDIV0_UART( 1 ) );
-	#endif
+	//#if (ENABLE_UART)
+	//CLK_EnableModuleClock( UART0_MODULE );
+	//CLK_SetModuleClock( UART0_MODULE, CLK_CLKSEL1_UARTSEL_HXT, CLK_CLKDIV0_UART( 1 ) );
+	//#endif
 
 	// USB CLK = PLL/3 (48MHz)
 	CLK_EnableModuleClock( USBD_MODULE );
@@ -231,9 +231,9 @@ __myevic__ void InitHardware()
 
 	SYS_LockReg();
 
-	#if (ENABLE_UART)
-	InitUART0();
-	#endif
+	//#if (ENABLE_UART)
+	//InitUART0();
+	//#endif
 
 	InitGPIO();
 
@@ -293,6 +293,7 @@ __myevic__ void InitRTC()
 	{
 		MilliJoules = RTCReadRegister( RTCSPARE_VV_MJOULES );
 	}
+        if ( !MilliJoules ) MilliJoules = dfJoules;
 }
 
 
@@ -304,7 +305,7 @@ __myevic__ void InitVariables()
 	LEDGetColor();
 	KeyPressTime |= 0x8000;
 	LastInputs |= 0x80;
-	byte_200000B3 = 1;
+	Set_NewRez_dfRez = 1;
 	gFlags.draw_edited_item = 1;
 	gFlags.refresh_battery = 1;
 	gFlags.read_battery = 1;
@@ -315,8 +316,14 @@ __myevic__ void InitVariables()
 	AtoMaxVolts = MaxVolts;
 	AtoMinPower = 10;
 	AtoMaxPower = MaxPower;
-	//Object3D = 1;
-	AtoTemp = 70;
+	//Object3D = 1;	
+        //if ( !dfMaxBoardTemp ) dfMaxBoardTemp = 70;
+        
+        gFlags.FireNotFlipped = 1;
+        gFlags.screen_on = 1;
+        if ( !dfColdLockTemp ) dfColdLockTemp = 20;
+        if ( !dfNewRezPerc ) dfNewRezPerc = 5;
+        AtoTemp = CelsiusToF( dfColdLockTemp ); //70;
 }
 
 
@@ -390,107 +397,142 @@ __myevic__ void DevicesOnOff( int off )
 		}
 
 		EADC_Close( EADC );
+                
 		SetADCState( 1, 0 );
 		SetADCState( 2, 0 );
-		SetADCState( 14, 0 );
+                
+                if ( ISRX300 )
+                    SetADCState( 17, 0 );
+                else
+                    SetADCState( 14, 0 ); //ISSINP80
 
-		if ( ISVTCDUAL || ISCUBOID || ISCUBO200 || ISRX200S || ISRX23 || ISRX300 || ISPRIMO1 || ISPRIMO2 || ISPREDATOR )
+		if ( ISVTCDUAL || ISCUBOID || ISCUBO200 || ISRX200S || ISRX23 || ISRX300 || ISPRIMO1 || 
+                        ISPRIMO2 || ISPREDATOR || ISGEN3 || ISSINP80 || ISINVOKE )
 		{
-			SetADCState( 3, 0 );
-			SetADCState( 13, 0 );
-
+                        if ( !ISSINP80 )
+                        {
+                                SetADCState( 3, 0 );
+                                SetADCState( 13, 0 );
+                        }
+                    
 			if ( ISCUBO200 || ISRX200S || ISRX23 || ISRX300 )
 			{
 				SetADCState( 15, 0 );
 			}
 
-			PD7 = 0;
-			BBC_Configure( BBC_PWMCH_CHARGER, 0 );
+			PD7 = 0;                                                // 0x400048DC
+			BBC_Configure( BBC_PWMCH_CHARGER, 0 );                  // 5 0
 			PD7 = 0;
 
 			if ( ISCUBOID || ISCUBO200 || ISRX200S || ISRX23 )
 			{
-				PF2 = 0;
+				PF2 = 0;                                        // 0x40004948
 			}
 		}
 
-		PC1 = 0;
-		PC0 = 0;
-		BBC_Configure( BBC_PWMCH_BUCK, 0 );
-		if ( !ISVTCDUAL ) PC3 = 0;
-		PC2 = 0;
-		BBC_Configure( BBC_PWMCH_BOOST, 0 );
+		PC1 = 0;                                                        // 40004884
+		PC0 = 0;                                                        // 40004880
+		BBC_Configure( BBC_PWMCH_BUCK, 0 );                             // 0 0
+                
+		if ( !ISVTCDUAL ) 
+                    PC3 = 0;                                                    // 4000488C
+                
+                if ( !ISINVOKE )
+		PC2 = 0;                                                        // 40004888
+                
+		BBC_Configure( BBC_PWMCH_BOOST, 0 );                            // 2 0
 
 		if ( ISCUBO200 || ISRX200S || ISRX23 )
 		{
-			PF1 = 0;
+			PF1 = 0;                                                // 40004944
 		}
 		else if ( ISRX300 )
 		{
-			PD1 = 0;
+			PD1 = 0;                                                // 400048C4
 		}
 		else
 		{
-			PB7 = 0;
+			PB7 = 0;                                                // 4000485C
 		}
 
-		GPIO_DisableInt( PD, 0 );
-		PD0 = 0;
-		GPIO_SetMode( PD, GPIO_PIN_PIN0_Msk, GPIO_MODE_OUTPUT );
-
-		if ( ISRX300 )
+                if ( !ISRX2 && !ISSINP80 && !ISINVOKE )
 		{
-			PF5 = 0;
-			PF6 = 0;
-			PA3 = 0;
-			PA2 = 0;
-		}
-		if ( ISPRIMO1 || ISPRIMO2 || ISPREDATOR )
+                    GPIO_DisableInt( PD, 0 );
+                    PD0 = 0;                                                        // 400048C0
+                    GPIO_SetMode( PD, GPIO_PIN_PIN0_Msk, GPIO_MODE_OUTPUT );        // 400040C0 1 1
+                }
+                    
+		if ( ISRX300 || ISPRIMO1 || ISPRIMO2 || ISPREDATOR || ISGEN3 || ISRX2 || ISINVOKE )
 		{
-			PA3 = 0;
-			PA2 = 0;
+                    if ( ISRX300 || ISRX2 )
+                    {
+			PF5 = 0;                                                // 40004954
+			PF6 = 0;                                                // 40004958
+                    }   
+                    else if ( ISGEN3 )
+                    {
+                        PF5 = 0;
+                    }
+                    
+                    if ( !ISRX2 )
+                    {
+			PA3 = 0;                                                // 4000480C
+			PA2 = 0;                                                // 40004808
+                    }
 		}
+                
 		if ( ISVTCDUAL )
 		{
 			GPIO_DisableInt( PD, 1 );
-			PD1 = 0;
+			PD1 = 0;                                                // 400048C4
 			GPIO_SetMode( PD, GPIO_PIN_PIN1_Msk, GPIO_MODE_OUTPUT );
 		}
-		else if ( !ISCUBOID && !ISCUBO200 && !ISRX200S && !ISRX23 && !ISRX300 && !ISPRIMO1 && !ISPRIMO2 && !ISPREDATOR )
+		else if ( !ISCUBOID && !ISCUBO200 && !ISRX200S && !ISRX23 && !ISRX300 
+                        && !ISPRIMO1 && !ISPRIMO2 && !ISPREDATOR && !ISGEN3 && !ISRX2 && !ISINVOKE )
 		{
-			GPIO_DisableInt( PD, 7 );
-			PD7 = 0;
+			GPIO_DisableInt( PD, 7 ); //ISSINP80
+			PD7 = 0;                                                // 400048DC
 			GPIO_SetMode( PD, GPIO_PIN_PIN7_Msk, GPIO_MODE_OUTPUT );
 		}
 
 		SYS->GPE_MFPH &= ~(SYS_GPE_MFPH_PE11MFP_Msk|SYS_GPE_MFPH_PE12MFP_Msk|SYS_GPE_MFPH_PE13MFP_Msk);
 		SYS->GPE_MFPH |= (SYS_GPE_MFPH_PE11MFP_GPIO|SYS_GPE_MFPH_PE12MFP_GPIO|SYS_GPE_MFPH_PE13MFP_GPIO);
-		PE11 = 0;
+                
+		PE11 = 0;                                                       // 4000492C
 		GPIO_SetMode( PE, GPIO_PIN_PIN11_Msk, GPIO_MODE_OUTPUT );
-		PE12 = 0;
+		PE12 = 0;                                                       // 40004930
 		GPIO_SetMode( PE, GPIO_PIN_PIN12_Msk, GPIO_MODE_OUTPUT );
-		PE13 = 0;
+		PE13 = 0;                                                       // 40004934
 		GPIO_SetMode( PE, GPIO_PIN_PIN13_Msk, GPIO_MODE_OUTPUT );
-		PE10 = 0;
+		PE10 = 0;                                                       // 40004928
 
-		GPIO_EnableInt( PE, 0, GPIO_INT_BOTH_EDGE );
-		GPIO_EnableInt( PD, 2, GPIO_INT_BOTH_EDGE );
-		GPIO_EnableInt( PD, 3, GPIO_INT_BOTH_EDGE );
+		GPIO_EnableInt( PE, 0, GPIO_INT_BOTH_EDGE );                    // 4100
+		GPIO_EnableInt( PD, 2, GPIO_INT_BOTH_EDGE );                    // 40C0
+		GPIO_EnableInt( PD, 3, GPIO_INT_BOTH_EDGE );                    // 40C0
 
 		if ( ISVTCDUAL )
 		{
-			PA3 = 0;
-			PC3 = 0;
-			PF2 = 0;
-			PA2 = 0;
+			PA3 = 0;                                                // 480C
+			PC3 = 0;                                                // 488C
+			PF2 = 0;                                                // 4948
+			PA2 = 0;                                                // 4808
 		}
 		else if ( ISCUBOID || ISCUBO200 || ISRX200S || ISRX23 || ISRX300 )
 		{
-			PF0 = 0;
+			PF0 = 0;                                                // 4940
 		}
-                else if ( ISPRIMO1 || ISPRIMO2 || ISPREDATOR )
+                else if ( ISPRIMO1 || ISPRIMO2 || ISPREDATOR || ISINVOKE )
                 {
-                        PD1 = 0;
+                        PD1 = 0;                                                // 48C4
+                }
+                else if ( ISGEN3 )
+                {
+                        PF0 = 0;                                                // 4940
+                        PD1 = 0;                                                // 48C4
+                }
+                else if ( ISRX2 )
+                {
+                        PF2 = 0;                                                // 4948
                 }
                 
 		SYS_UnlockReg();
@@ -503,7 +545,7 @@ __myevic__ void DevicesOnOff( int off )
 		USBD_CLR_INT_FLAG( USBD_INTSTS_WAKEUP|USBD_INTSTS_FLDET|USBD_INTSTS_BUS|USBD_INTSTS_USB );
 		USBD_ENABLE_INT( USBD_INT_WAKEUP );
 	}
-	else
+	else //Device On
 	{
 		USBD_CLR_INT_FLAG( USBD_INTSTS_WAKEUP );
 
@@ -520,52 +562,65 @@ __myevic__ void DevicesOnOff( int off )
 		SYS_EnableBOD( SYS_BODCTL_BOD_RST_EN, SYS_BODCTL_BODVL_2_2V );
 		SYS_LockReg();
 
-		GPIO_DisableInt( PE, 0 );
-		GPIO_DisableInt( PD, 2 );
-		GPIO_DisableInt( PD, 3 );
+		GPIO_DisableInt( PE, 0 );                                       // 4100
+		GPIO_DisableInt( PD, 2 );                                       // 40C0
+		GPIO_DisableInt( PD, 3 );                                       // 40C0
 
 		if ( ISCUBOID || ISCUBO200 || ISRX200S || ISRX23 )
 		{
-			PF2 = 1;
+			PF2 = 1;                                                // 4948
 		}
 
 		SYS->GPE_MFPH &= ~(SYS_GPE_MFPH_PE11MFP_Msk|SYS_GPE_MFPH_PE12MFP_Msk|SYS_GPE_MFPH_PE13MFP_Msk);
 		SYS->GPE_MFPH |= (SYS_GPE_MFPH_PE11MFP_SPI0_MOSI0|SYS_GPE_MFPH_PE12MFP_SPI0_SS|SYS_GPE_MFPH_PE13MFP_SPI0_CLK);
 
-		GPIO_SetMode( PD, GPIO_PIN_PIN0_Msk, GPIO_MODE_INPUT );
-		GPIO_EnableInt( PD, 0, GPIO_INT_FALLING );
-
+                if ( !ISRX2 && !ISSINP80 && !ISINVOKE )
+                {
+                        GPIO_SetMode( PD, GPIO_PIN_PIN0_Msk, GPIO_MODE_INPUT );         // 40C0
+                        GPIO_EnableInt( PD, 0, GPIO_INT_FALLING );
+                }
+                
 		if ( ISVTCDUAL )
 		{
-			GPIO_SetMode( PD, GPIO_PIN_PIN1_Msk, GPIO_MODE_INPUT );
+			GPIO_SetMode( PD, GPIO_PIN_PIN1_Msk, GPIO_MODE_INPUT ); // 40C0
 			GPIO_EnableInt( PD, 1, GPIO_INT_RISING );
 			GPIO_ENABLE_DEBOUNCE( PD, GPIO_PIN_PIN1_Msk );
 		}
-		else if ( !ISCUBOID && !ISCUBO200 && !ISRX200S && !ISRX23 && !ISRX300 && !ISPRIMO1 && !ISPRIMO2 && !ISPREDATOR )
+		else if ( !ISCUBOID && !ISCUBO200 && !ISRX200S && !ISRX23 && !ISRX300 
+                        && !ISPRIMO1 && !ISPRIMO2 && !ISPREDATOR && !ISGEN3 && !ISRX2 && !ISINVOKE )
 		{
-			GPIO_SetMode( PD, GPIO_PIN_PIN7_Msk, GPIO_MODE_INPUT );
+			GPIO_SetMode( PD, GPIO_PIN_PIN7_Msk, GPIO_MODE_INPUT ); // 40C0  ISSINP80
 			GPIO_EnableInt( PD, 7, GPIO_INT_RISING );
 			GPIO_ENABLE_DEBOUNCE( PD, GPIO_PIN_PIN7_Msk );
 		}
 
 		if ( ISCUBO200 || ISRX200S || ISRX23 )
 		{
-			PF1 = 1;
+			PF1 = 1;                                                // 4944
 		}
 		else if ( ISRX300 )
 		{
-			PD1 = 1;
+			PD1 = 1;                                                // 48C4
 		}
-		else
+		else if ( ISRX2 )
 		{
-			PB7 = 1;
+			PA3 = 1;                                                // 48C4
+		}
+		else if ( !ISSINP80 )
+		{
+			PB7 = 1;                                                // 485C
 		}
 
 		SetADCState( 1, 1 );
 		SetADCState( 2, 1 );
-		SetADCState( 14, 1 );
+                
+                if ( ISRX300 )
+                    SetADCState( 17, 1 );
+                else
+                    SetADCState( 14, 1 );
 
-		if ( ISVTCDUAL || ISCUBOID || ISCUBO200 || ISRX200S || ISRX23 || ISRX300 || ISPRIMO1 || ISPRIMO2 || ISPREDATOR )
+		if ( ISVTCDUAL || ISCUBOID || ISCUBO200 || ISRX200S || ISRX23 || ISRX300 
+                        || ISPRIMO1 || ISPRIMO2 || ISPREDATOR || ISGEN3 || ISRX2 || ISINVOKE )
 		{
 			SetADCState( 3, 1 );
 			SetADCState( 13, 1 );
@@ -601,9 +656,9 @@ __myevic__ void LightSleep()
 	CLK_DisableModuleClock( PWM0_MODULE );
 	CLK_DisableModuleClock( SPI0_MODULE );
 	CLK_DisableModuleClock( CRC_MODULE );
-	#if (ENABLE_UART)
-	CLK_DisableModuleClock( UART0_MODULE );
-	#endif
+	//#if (ENABLE_UART)
+	//CLK_DisableModuleClock( UART0_MODULE );
+	//#endif
 
 	gFlags.wake_up = 0;
 
@@ -624,9 +679,9 @@ __myevic__ void LightSleep()
 	SystemCoreClockUpdate();
 
 	// Wake up Modules
-	#if (ENABLE_UART)
-	CLK_EnableModuleClock( UART0_MODULE );
-	#endif
+	//#if (ENABLE_UART)
+	//CLK_EnableModuleClock( UART0_MODULE );
+	//#endif
 	CLK_EnableModuleClock( PWM0_MODULE );
 	CLK_EnableModuleClock( SPI0_MODULE );
 	CLK_EnableModuleClock( CRC_MODULE );
@@ -637,9 +692,9 @@ __myevic__ void LightSleep()
 //----- (00005D14) --------------------------------------------------------
 __myevic__ void FlushAndSleep()
 {
-	#if (ENABLE_UART)
-		UART_WAIT_TX_EMPTY( UART0 );
-	#endif
+	//#if (ENABLE_UART)
+	//	UART_WAIT_TX_EMPTY( UART0 );
+	//#endif
 
 	if ( !gFlags.light_sleep )
 	{
@@ -678,9 +733,14 @@ void GoToSleep()
 	WDT_Open( WDT_TIMEOUT_2POW14, WDT_RESET_DELAY_18CLK, TRUE, FALSE );
 	SYS_LockReg();
 	gFlags.refresh_battery = 1;
+        
+        if ( dfStatus.invert ) gFlags.inverse = 1;
+                                        
 	DevicesOnOff( 0 );
 	RTCWakeUp();
 	InitDisplay();
+        
+        //if ( !dfStatus.off ) gFlags.asleep = 1;
 }
 
 
@@ -691,13 +751,15 @@ __myevic__ void SleepIfIdle()
 	if ( !gFlags.firing && !NoEventTimer )
 	{
 		if ( ( Screen == 0 ) && ( SleepTimer == 0 ) && ( gFlags.user_idle ) )
-		{
+		{                  
 			GoToSleep();
 
-			byte_200000B3 = 2;
+			Set_NewRez_dfRez = 2;
 			AtoProbeCount = 0;
 			AtoRezMilli = 0;
                         PuffsOffCount = 0;
+                        NextPreheatTimer = 0;
+                        AutoPuffTimer = 0;
 			gFlags.sample_vbat = 1;
 			ReadBatteryVoltage();
 			if (( BatteryVoltage <= BatteryCutOff + 20 ) && !gFlags.usb_attached )
@@ -715,6 +777,7 @@ __myevic__ void SleepIfIdle()
 //=========================================================================
 // Monitoring
 //-------------------------------------------------------------------------
+/*
 __myevic__ void Monitor()
 {
 	if ( gFlags.firing )
@@ -787,12 +850,15 @@ __myevic__ void Monitor()
 		}
 	}
 }
+*/
 
 
 //=========================================================================
 //----- (00000148) --------------------------------------------------------
 __myevic__ void Main()
 {
+    //Init
+    
 	InitDevices();
 
 	InitVariables();
@@ -812,10 +878,12 @@ __myevic__ void Main()
 
 	gFlags.sample_vbat = 1;
 	ReadBatteryVoltage();
-
+        
 	gFlags.sample_btemp = 1;
 	ReadBoardTemp();
-
+        
+        //if ( ISGEN3 ) WaitOnTMR2( 1500 );
+        
 	InitDisplay();
 	MainView();
 	SplashTimer = 2;
@@ -828,13 +896,16 @@ __myevic__ void Main()
 		while ( !PD3 )
 			;
 	}
-
+       
 	while ( 1 )
-	{
-		while ( gFlags.playing_fb )
+	{            
+            	while ( gFlags.playing_fb || gFlags.playing_tt )
 		{
-			// Flappy Bird game loop
-			fbCallTimeouts();
+                        if ( gFlags.playing_fb )
+                                fbCallTimeouts();
+                        else
+                                ttCallTimeouts();
+                            
 			if ( gFlags.tick_100hz )
 			{
 				// 100Hz
@@ -843,31 +914,21 @@ __myevic__ void Main()
 				TimedItems();
 				//SleepIfIdle();
 				GetUserInput();
-				//if ( !PE0 )
-				//	SleepTimer = 3000;
-			}
-			if ( gFlags.tick_10hz )
-			{
-				// 10Hz
-				gFlags.tick_10hz = 0;
-				DataFlashUpdateTick();
-			}
-		}
-                
-		while ( gFlags.playing_tt )
-		{
-			// Tetris game loop
-			ttCallTimeouts();
-			if ( gFlags.tick_100hz )
-			{
-				// 100Hz
-				gFlags.tick_100hz = 0;
-				ResetWatchDog();
-				TimedItems();
-				//SleepIfIdle();
-				GetUserInput();
-				//if ( !PE0 )
-					SleepTimer = 3000;
+                                if ( !SleepTimer )
+                                {
+                                    if ( gFlags.playing_fb )
+                                    {
+                                        gFlags.playing_fb = 0;
+					fbInitTimeouts();
+                                    }
+                                    else
+                                    {
+                                        gFlags.playing_tt = 0;
+					ttInitTimeouts();
+                                    }   
+                                }
+                                if ( !PE0 || !PD2 || !PD3 )
+                                    SleepTimer = 3000; //30 sec
 			}
 			if ( gFlags.tick_10hz )
 			{
@@ -939,7 +1000,7 @@ __myevic__ void Main()
 			ReadBatteryVoltage();
 			ReadBoardTemp();
 
-			if ( gFlags.firing && BoardTemp >= MaxBoardTemp )
+			if ( gFlags.firing && BoardTemp >= dfMaxBoardTemp )
 			{
 				Overtemp();
 			}
@@ -947,21 +1008,34 @@ __myevic__ void Main()
 			if ( ISVTCDUAL )
 			{
 				BatteryChargeDual();
+                                gFlags.soft_charge = 1;
 			}
-			else if ( ISCUBOID || ISCUBO200 || ISRX200S || ISRX23 || ISRX300 || ISPRIMO1 || ISPRIMO2 || ISPREDATOR )
+			else if ( ISCUBOID || ISCUBO200 || ISRX200S || ISRX23 || ISRX300 || ISPRIMO1 
+                                || ISPRIMO2 || ISPREDATOR || ISGEN3 || ISRX2 || ISINVOKE )
 			{
 				BatteryCharge();
+                                gFlags.soft_charge = 1;
 			}
+                        else
+                        {
+                            gFlags.soft_charge = 0;
+                        }
 
 			if (( dfStatus2.anim3d ) && ( Screen == 1 ) && ( dfMode != 6 ) && ( !EditModeTimer ) && !HideLogo && !SplashTimer )
 			{
 				anim3d( 0 );
 			}
 
-			if ( Screen == 60 )
+			if ( ( Screen == 60 || Screen == 0 ) && !dfStatus.off ) 
+                            //!dfStatus.off = main contrast in off state and fire click (clock)
 			{
-                                if ( gFlags.MainContrast ) DisplaySetContrast( dfContrast2 );
-				AnimateScreenSaver();
+                                if ( gFlags.MainContrast ) 
+                                {
+                                    DisplaySetContrast( dfContrast2 );
+                                    gFlags.MainContrast = 0;
+                                }
+				if ( Screen == 60 ) 
+                                    AnimateScreenSaver();
 			}
                         
 			if ( gFlags.firing )
@@ -995,7 +1069,7 @@ __myevic__ void Main()
 					{
 
 						gFlags.limit_power = 0;
-						PowerScale = 100;
+						//PowerScale = 100;
 					}
 
 				}
@@ -1017,12 +1091,46 @@ __myevic__ void Main()
 			DataFlashUpdateTick();
 			LEDTimerTick();
                                                
-                        if ( !gFlags.MainContrast && Screen != 60 && Screen != 5 )
+                        if ( !gFlags.MainContrast && Screen != 60 && Screen != 5 && Screen != 0 && !gFlags.firing ) //&& Screen != 2)
 			{
                                 DisplaySetContrast( dfContrast );
                                 gFlags.MainContrast = 1;
                         }
                         
+                        if (dfStatus.invert )
+                        {
+                            
+                            int st = (dfStealthOn == 1) || !gFlags.screen_on; //|| ScreenDuration == 0 ;
+                        
+//myprintf( "st=%d dfSt=%d scrOn=%d Scr=%d inv=%d dur=%d\n",
+//			st, dfStealthOn, gFlags.screen_on, Screen, gFlags.inverse, ScreenDuration );
+
+                        
+                            if  
+                                ( 
+                                    Screen == 0 
+                                    || ( Screen == 5 && st && !ScreenDuration ) 
+                                    || ( Screen == 2 && st )
+                                ) 
+                            {
+                                if ( gFlags.inverse )
+                                {
+                                    gFlags.refresh_display = 1;
+                                    DisplaySetInverse( 0 );
+                                    gFlags.inverse = 0;
+                                }
+                            }
+                            else
+                            {
+                                if ( !gFlags.inverse )
+                                {
+                                    gFlags.refresh_display = 1;
+                                    DisplaySetInverse( 1 );
+                                    gFlags.inverse = 1;
+                                }
+                            }
+                        }
+                      
 			if ( gFlags.firing )
                         {                                                                              
                                 if ( dfStatus.fireflip && gFlags.FireNotFlipped && FireDuration > 2 )
@@ -1034,11 +1142,12 @@ __myevic__ void Main()
                                 }
   
 				++FireDuration;
-
-				if ( gFlags.monitoring )
-				{
-					Monitor();
-				}
+                                if ( dfStatus.pcurve ) ++CurveRepeatTimerDuration;
+                                        
+				//if ( gFlags.monitoring )
+				//{
+				//	Monitor();
+				//}
 			}
                         else if  ( dfStatus.fireflip && !gFlags.FireNotFlipped && Screen == 1 )
                         {
@@ -1051,8 +1160,8 @@ __myevic__ void Main()
 			if ( ShowWeakBatFlag )
 				--ShowWeakBatFlag;
 
-			if ( ShowProfNum )
-				--ShowProfNum;
+			//if ( ShowProfNum )
+			//	--ShowProfNum;
 
 			if ( !( gFlags.firing && ISMODETC(dfMode) ) )
 			{
@@ -1074,7 +1183,7 @@ __myevic__ void Main()
 			{
 				InitRTC();
 			}
-
+                              
 			if ( gFlags.firing )
 			{
 				if ( TargetVolts == 0 )
@@ -1088,7 +1197,8 @@ __myevic__ void Main()
 				(	!dfStatus.off
 					&& Event == 0
 					&& ( AtoProbeCount < 12 )
-					&& ( Screen == 0 || Screen == 1 || Screen == 5 ) )
+					&& ( Screen == 0 || Screen == 1 || Screen == 2 || Screen == 5 || Screen == 60 )
+                                )
 				{
 					ProbeAtomizer();
 				}
@@ -1113,9 +1223,16 @@ __myevic__ void Main()
 		{
 			// 2Hz
 			gFlags.tick_2hz = 0;
-
+                        
 			gFlags.osc_1hz ^= 1;
-
+//
+                        if ( !gFlags.battery_charging && !gFlags.nbcr && dfStatus.nbrc && gFlags.rtcinit && ( BatteryVoltage > 250 ) &&  ( BatteryVoltage > dfBattVolt + 20 )) 
+                        {
+                                gFlags.nbcr = 1;
+                                dfBattVolt = BatteryVoltage;
+                                ResetAllCounters();     
+                        }
+ 
 			if ( gFlags.firing )
 			{
 				if ( ISMODETC(dfMode) )
@@ -1124,21 +1241,39 @@ __myevic__ void Main()
 				}
 			}
 			else
-			{
+                        {
+                            //if ( AtoError == 2 ) 
+                            if 
+                                ( 
+                                ( AtoStatus == 1 || AtoStatus == 2 ) //short low
+                                && !dfStatus.off
+                                && Event == 0
+                                && AtoProbeCount >= 12
+                                )
+                            {
+                                AtoStatus = 4;
+                                ProbeAtomizer();
+                                //ReadAtomizer();
+                            }
+
+                        }
+			//{
+/*
 				if
 				(	!dfStatus.off
 					&& Event == 0
 					&& ( AtoProbeCount >= 12 )
-					&& ( Screen == 0 || Screen == 1 || Screen == 5 ) )
+					&& ( Screen == 0 || Screen == 1 || Screen == 5 || Screen == 60 ) )
 				{
 					ProbeAtomizer();
 				}
+*/
 
-				if ( gFlags.monitoring )
-				{
-					Monitor();
-				}
-			}
+				//if ( gFlags.monitoring )
+				//{
+				//	Monitor();
+				//}
+			//}
 		}
                 
 		if ( gFlags.tick_1hz )
@@ -1146,6 +1281,8 @@ __myevic__ void Main()
 			// 1Hz
 			gFlags.tick_1hz = 0;
                        
+                        if ( !gFlags.firing ) AtoProbeCount = 10; //for quick res mesure in idle (lower - better but with fire multiclicks damage)
+                                
 			if ( SplashTimer )
 			{
 				--SplashTimer;

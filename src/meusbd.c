@@ -196,6 +196,7 @@ const S_USBD_INFO_T usbdVCOMDescriptors =
 	usbdConfigHidDescIdx
 };
 
+/*
 const S_USBD_INFO_T usbdMSCDescriptors =
 {
 	usbdDevice,
@@ -205,6 +206,7 @@ const S_USBD_INFO_T usbdMSCDescriptors =
 	usbdHIDReportSize,
 	usbdConfigHidDescIdx
 };
+*/
 
 
 //=========================================================================
@@ -368,11 +370,11 @@ __myevic__ void usbdClassRequest()
 			VCOM_ClassRequest( token );
 			return;
 		}
-		if (( dfStatus.storage ) && ( token[4] == MSC_INTERFACE ))
-		{
-			MSC_ClassRequest( token );
-			return;
-		}
+		//if (( dfStatus.storage ) && ( token[4] == MSC_INTERFACE ))
+		//{
+		//	MSC_ClassRequest( token );
+		//	return;
+		//}
 	}
 
 	if( token[0] & 0x80 )    /* request data transfer direction */
@@ -482,20 +484,20 @@ __myevic__ void SetupEndpoints()
 		/* trigger receive OUT data */
 		USBD_SET_PAYLOAD_LEN(EP6, EP6_MAX_PKT_SIZE);
 	}
-	else if ( dfStatus.storage )
-	{
+	//else if ( dfStatus.storage )
+	//{
 		/* EP5 ==> Bulk IN endpoint, address 1 */
-		USBD_CONFIG_EP(EP5, USBD_CFG_EPMODE_IN | MSC_BULK_IN_EP_NUM);
+	//	USBD_CONFIG_EP(EP5, USBD_CFG_EPMODE_IN | MSC_BULK_IN_EP_NUM);
 		/* Buffer offset for EP5 */
-		USBD_SET_EP_BUF_ADDR(EP5, EP5_BUF_BASE);
+	//	USBD_SET_EP_BUF_ADDR(EP5, EP5_BUF_BASE);
 
 		/* EP6 ==> Bulk Out endpoint, address 2 */
-		USBD_CONFIG_EP(EP6, USBD_CFG_EPMODE_OUT | MSC_BULK_OUT_EP_NUM);
+	//	USBD_CONFIG_EP(EP6, USBD_CFG_EPMODE_OUT | MSC_BULK_OUT_EP_NUM);
 		/* Buffer offset for EP6 */
-		USBD_SET_EP_BUF_ADDR(EP6, EP6_BUF_BASE);
+	//	USBD_SET_EP_BUF_ADDR(EP6, EP6_BUF_BASE);
 		/* trigger receive OUT data */
-		USBD_SET_PAYLOAD_LEN(EP6, EP6_MAX_PKT_SIZE);
-	}
+	//	USBD_SET_PAYLOAD_LEN(EP6, EP6_MAX_PKT_SIZE);
+	//}
 }
 
 
@@ -509,12 +511,12 @@ __myevic__ void InitUSB()
 	{
 		USBD_Open( &usbdVCOMDescriptors, usbdClassRequest+1, 0 );
 	}
-	else if ( dfStatus.storage )
-	{
-		USBD_Open( &usbdMSCDescriptors, usbdClassRequest+1, 0 );
-		USBD_SetConfigCallback( MSC_SetConfig );
-		MSC_Init();
-	}
+	//else if ( dfStatus.storage )
+	//{
+	//	USBD_Open( &usbdMSCDescriptors, usbdClassRequest+1, 0 );
+	//	USBD_SetConfigCallback( MSC_SetConfig );
+	//	MSC_Init();
+	//}
 	else
 	{
 		USBD_Open( &usbdDescriptors, usbdClassRequest+1, 0 );
@@ -539,24 +541,24 @@ __myevic__ void InitUSB()
 
 /* HID Commands */
 #define HID_CMD_NONE		0x00
-#define HID_CMD_GETINFO		0x35
-#define HID_CMD_LDUPDATE	0x3C
-#define HID_CMD_FORCE_VCOM	0x42
-#define HID_CMD_MONITORING	0x43
+#define HID_CMD_GETINFO		0x35    //read df
+//#define HID_CMD_LDUPDATE	0x3C
+//#define HID_CMD_FORCE_VCOM	0x42
+//#define HID_CMD_MONITORING	0x43
 #define HID_CMD_AUTO_PUFF	0x44
-#define HID_CMD_SETPARAMS	0x53
-#define HID_CMD_READCONFIG	0x60
-#define HID_CMD_WRITECONFIG	0x61
+#define HID_CMD_SETPARAMS	0x53    //write df
+//#define HID_CMD_READCONFIG	0x60
+//#define HID_CMD_WRITECONFIG	0x61
 #define HID_CMD_SETDATETIME	0x64
 #define HID_CMD_GETMONDATA	0x66
-#define HID_CMD_GETPROFILE	0x70
-#define HID_CMD_SETPROFILE	0x71
-#define HID_CMD_RESETPARAMS	0x7C
+//#define HID_CMD_GETPROFILE	0x70
+//#define HID_CMD_SETPROFILE	0x71
+#define HID_CMD_RESETPARAMS	0x7C    //reset df
 #define HID_CMD_SETLOGO		0xA5
-#define HID_CMD_RESET		0xB4
-#define HID_CMD_FMCREAD		0xC0
+#define HID_CMD_RESET		0xB4    //restart mod
+//#define HID_CMD_FMCREAD		0xC0
 #define HID_CMD_SCREENSHOT	0xC1
-#define HID_CMD_APUPDATE	0xC3
+#define HID_CMD_APUPDATE	0xC3    //write data
 
 #define HID_CONFIG_LENGTH	0x400
 #define HID_CONFIG_FORMAT	0x03
@@ -653,7 +655,7 @@ __myevic__ void hidSetInReport()
 	{
 		case HID_CMD_GETINFO:
 		case HID_CMD_SCREENSHOT:
-		case HID_CMD_GETPROFILE:
+		//case HID_CMD_GETPROFILE:
 		{
 			if ( hidDataIndex )
 			{
@@ -672,6 +674,7 @@ __myevic__ void hidSetInReport()
 			break;
 		}
 
+/*
 		case HID_CMD_FMCREAD:
 		{
 			if ( !hidDataIndex )
@@ -714,6 +717,7 @@ __myevic__ void hidSetInReport()
 			}
 			break;
 		}
+*/
 
 		default:
 			cmd = HID_CMD_NONE;
@@ -753,9 +757,10 @@ __myevic__ uint32_t hidResetSysCmd( CMD_T *pCmd )
 	if ( UpdateDFTimer ) UpdateDataFlash();
 	if ( UpdatePTTimer ) UpdatePTCounters();
 
-	if ( ISVTCDUAL || ISCUBOID || ISCUBO200 || ISRX200S || ISRX23 || ISRX300 || ISPRIMO1 || ISPRIMO2 || ISPREDATOR )
+	if ( ISVTCDUAL || ISCUBOID || ISCUBO200 || ISRX200S || ISRX23 || ISRX300 || ISPRIMO1 
+                || ISPRIMO2 || ISPREDATOR || ISGEN3 || ISINVOKE || ISRX2 )
 	{
-		PD7 = 0;
+		PD7 = 0;                                            //48DC
 		BBC_Configure( BBC_PWMCH_CHARGER, 0 );
 		PD7 = 0;
 		ChargerDuty = 0;
@@ -766,11 +771,15 @@ __myevic__ uint32_t hidResetSysCmd( CMD_T *pCmd )
 			PC3 = 0;
 			PA2 = 0;
 		}
-                else if ( ISPRIMO1 || ISPRIMO2 || ISPREDATOR )
+                else if ( ISPRIMO1 || ISPRIMO2 || ISPREDATOR || ISINVOKE )
                 {
-                        PD1 = 0;
+                        PD1 = 0;                                    //48C4
                 }
-		else	// if ( ISCUBOID || ISCUBO200 || ISRX200S || ISRX23 || ISRX300 )
+                else if ( ISRX2 )
+                {
+                        PF2 = 0;                                    //4948
+                }
+		else	// if ( ISCUBOID || ISCUBO200 || ISRX200S || ISRX23 || ISRX300 gen3 )
 				// (currently useless, restore if needed)
 		{
 			PF0 = 0;
@@ -816,6 +825,7 @@ __myevic__ uint32_t hidGetInfoCmd( CMD_T *pCmd )
 
 		dfStruct_t * df = (dfStruct_t*)hidData;
 
+/*
 		if ( dfStatus.nfe )
 		{
 			df->p.Magic = DATAFLASH_NFE_MAGIC;
@@ -830,6 +840,7 @@ __myevic__ uint32_t hidGetInfoCmd( CMD_T *pCmd )
 			o = offsetof( dfStruct_t, p ) + 0xCA;	// NFE Custom Battery offset
 			MemCpy( &hidData[o], &CustomBattery.V2P, 48 );
 		}
+*/
 
 		df->Checksum = Checksum( (uint8_t *)df->params, FMC_FLASH_PAGE_SIZE - 4 );
 
@@ -864,6 +875,7 @@ __myevic__ uint32_t hidSetParamCmd( CMD_T *pCmd )
 //-------------------------------------------------------------------------
 // Read Configuration
 //-------------------------------------------------------------------------
+/*
 __myevic__ uint32_t hidGetProfile( CMD_T *pCmd )
 {
 	uint32_t u32ProfileNum;
@@ -903,6 +915,7 @@ __myevic__ uint32_t hidGetProfile( CMD_T *pCmd )
 
 	return 0;
 }
+*/
 
 
 //-------------------------------------------------------------------------
@@ -934,7 +947,7 @@ __myevic__ uint32_t hidGetMonData( CMD_T *pCmd )
 //		myprintf( "Invalid parameters\n" );
 		return 1;
 	}
-
+       
 	HIDMonData_t *mondata = (HIDMonData_t*)hidData;
 
 	MemSet( mondata, 0, u32ParamLen );
@@ -949,33 +962,40 @@ __myevic__ uint32_t hidGetMonData( CMD_T *pCmd )
 
 	if ( gFlags.firing )
 	{
-		for ( int i = 0 ; i < NumBatteries ; ++i )
-		{
-			mondata->BatteryVoltage[i] = RTBVolts[i] - 275;
-		}
+		//for ( int i = 0 ; i < NumBatteries ; ++i )
+		//{
+		//	mondata->BatteryVoltage[i] = RTBVolts[i] - 275;
+		//}
 
-		if ( ISMODETC(dfMode) )
-		{
-			mondata->Temperature = temp;
-		}
+		//if ( ISMODETC(dfMode) )
+		//{
+		//	mondata->Temperature = temp;
+		//}
 
 		mondata->OutputVoltage = AtoVolts;
 		mondata->OutputCurrent = AtoCurrent * 10;
 	}
 	else
 	{
-		for ( int i = 0 ; i < NumBatteries ; ++i )
-		{
-			mondata->BatteryVoltage[i] = BattVolts[i] - 275;
-		}
+		//for ( int i = 0 ; i < NumBatteries ; ++i )
+		//{
+		//	mondata->BatteryVoltage[i] = BattVolts[i] - 275;
+		//}
 
-		if ( ISMODETC(dfMode) )
-		{
+		//if ( ISMODETC(dfMode) )
+		//{
 			ReadAtoTemp();
-			mondata->Temperature = temp;
-		}
+		//	mondata->Temperature = temp;
+		//}
 	}
-
+        
+	for ( int i = 0 ; i < NumBatteries ; ++i )
+	{
+		mondata->BatteryVoltage[i] = ( gFlags.firing ? RTBVolts[i] : BattVolts[i] ) - 275;
+	}
+        
+        mondata->Temperature = temp;
+        
 	if ( ISMODETC(dfMode) )
 	{
 		mondata->PowerSet = dfTCPower;
@@ -999,6 +1019,7 @@ __myevic__ uint32_t hidGetMonData( CMD_T *pCmd )
 
 
 //----- (0000272C) --------------------------------------------------------
+/*
 __myevic__ uint32_t hidLDUpdateCmd( CMD_T *pCmd )
 {
 	//myprintf( "Update LDROM command - Start page: %d\t\tLen: %d\n", pCmd->u32Arg1, pCmd->u32Arg2 );
@@ -1007,9 +1028,11 @@ __myevic__ uint32_t hidLDUpdateCmd( CMD_T *pCmd )
 	pCmd->u32Signature = 0;
 	return 0;
 }
+*/
 
 
 //----- (000025B8) --------------------------------------------------------
+/*
 __myevic__ uint32_t hidFMCReadCmd( CMD_T *pCmd )
 {
 	uint32_t u32StartAddr;
@@ -1051,6 +1074,7 @@ __myevic__ uint32_t hidFMCReadCmd( CMD_T *pCmd )
 
 	return 0;
 }
+*/
 
 
 //-------------------------------------------------------------------------
@@ -1107,6 +1131,8 @@ int32_t hidProcessCommand( uint8_t *pu8Buffer, uint32_t u32BufferLen )
     if( u32sum != hidCmd.u32Checksum )
         return -1;
 
+    SleepTimer = 3000; //no sleep while data
+    
     switch( hidCmd.u8Cmd )
     {
 		case HID_CMD_GETINFO:
@@ -1114,11 +1140,13 @@ int32_t hidProcessCommand( uint8_t *pu8Buffer, uint32_t u32BufferLen )
 			hidGetInfoCmd( &hidCmd );
 			break;
 		}
+/*
 		case HID_CMD_LDUPDATE:
 		{
 			hidLDUpdateCmd( &hidCmd );
 			break;
 		}
+*/
 		case HID_CMD_SETPARAMS:
 		{
 			hidSetParamCmd( &hidCmd );
@@ -1134,16 +1162,19 @@ int32_t hidProcessCommand( uint8_t *pu8Buffer, uint32_t u32BufferLen )
 			hidGetMonData( &hidCmd );
 			break;
 		}
+/*
 		case HID_CMD_GETPROFILE:
 		{
 			hidGetProfile( &hidCmd );
 			break;
 		}
+
 		case HID_CMD_SETPROFILE:
 		{
 			hidSetProfile( &hidCmd );
 			break;
 		}
+ */
 		case HID_CMD_SETLOGO:
 		{
 			hidBootLogoCmd( &hidCmd );
@@ -1154,16 +1185,19 @@ int32_t hidProcessCommand( uint8_t *pu8Buffer, uint32_t u32BufferLen )
 			hidResetSysCmd( &hidCmd );
 			break;
 		}
+/*
 		case HID_CMD_FMCREAD :
 		{
 			hidFMCReadCmd( &hidCmd );
 			break;
 		}
+*/
 		case HID_CMD_SCREENSHOT:
 		{
 			hidScreenshot( &hidCmd );
 			break;
 		}
+/*
 		case HID_CMD_FORCE_VCOM:
 		{
 			Event = EVENT_FORCE_VCOM;
@@ -1174,6 +1208,7 @@ int32_t hidProcessCommand( uint8_t *pu8Buffer, uint32_t u32BufferLen )
 			gFlags.monitoring = hidCmd.u32Arg1 ? 1 : 0;
 			break;
 		}
+*/
 		case HID_CMD_AUTO_PUFF:
 		{
 			if ( hidCmd.u32Arg1 < 10 )
@@ -1214,6 +1249,7 @@ __myevic__ void hidGetOutReport( uint8_t *pu8Buffer, uint32_t u32BufferLen )
 
 	switch ( hidCmd.u8Cmd )
 	{
+/*
 		case HID_CMD_SETPROFILE:
 		{
 			USBD_MemCopy( hidDataPtr, pu8Buffer, EP3_MAX_PKT_SIZE );
@@ -1279,6 +1315,7 @@ __myevic__ void hidGetOutReport( uint8_t *pu8Buffer, uint32_t u32BufferLen )
 
 			break;
 		}
+*/
 
 		case HID_CMD_SETPARAMS:
 		{
@@ -1322,6 +1359,7 @@ __myevic__ void hidGetOutReport( uint8_t *pu8Buffer, uint32_t u32BufferLen )
 						DFCheckValuesValidity();
 						UpdateDataFlash();
 					}
+/*
 					else
 					{
 						//myprintf( "Incompatible parameters format.\n" );
@@ -1350,6 +1388,7 @@ __myevic__ void hidGetOutReport( uint8_t *pu8Buffer, uint32_t u32BufferLen )
 							UpdateDataFlash();
 						}
 					}
+*/
 
 					if ( df->i.Year >= 2000 && df->i.Year <= 2099 )
 					{
@@ -1429,6 +1468,7 @@ __myevic__ void hidGetOutReport( uint8_t *pu8Buffer, uint32_t u32BufferLen )
 			break;
 		}
 
+/*
 		case HID_CMD_LDUPDATE:
 		{
 			USBD_MemCopy( hidDataPtr, pu8Buffer, EP3_MAX_PKT_SIZE );
@@ -1475,6 +1515,7 @@ __myevic__ void hidGetOutReport( uint8_t *pu8Buffer, uint32_t u32BufferLen )
 
 			break;
 		}
+*/
 
 		case HID_CMD_SETDATETIME:
 		{
@@ -1533,10 +1574,10 @@ __myevic__ void usbdEP5Handler()
 	{
 		VCOM_EP5Handler();
 	}
-	else if ( dfStatus.storage )
-	{
-		MSC_EP5Handler();
-	}
+	//else if ( dfStatus.storage )
+	//{
+	//	MSC_EP5Handler();
+	//}
 }
 
 //-------------------------------------------------------------------------
@@ -1546,8 +1587,8 @@ __myevic__ void usbdEP6Handler()
 	{
 		VCOM_EP6Handler();
 	}
-	else if ( dfStatus.storage )
-	{
-		MSC_EP6Handler();
-	}
+	//else if ( dfStatus.storage )
+	//{
+	//	MSC_EP6Handler();
+	//}
 }

@@ -16,7 +16,7 @@
 
 #define BBC_PWM_FREQ	150000
 
-#define ENABLE_UART		0
+//#define ENABLE_UART		0
 
 //-------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@
 
 //-------------------------------------------------------------------------
 
-#define FWVERSION	331
+#define FWVERSION	556
 
 #define __BUILD1	( __DAY__ + __MONTH__ * 100 + ( __YEAR__ % 100 ) * 10000 )
 
@@ -62,8 +62,13 @@ enum
 	BOX_RXMINI,
         BOX_PRIMO1,
         BOX_PRIMO2,
-        BOX_PREDATOR        
-                
+        BOX_PREDATOR,    
+        BOX_PRIMOSE,   
+        BOX_GEN3,
+        BOX_RX2,
+        BOX_SINP80,
+        BOX_SINFJ200,
+        BOX_INVOKE
 };
 
 #define ISVTCMINI		(BoxModel==BOX_VTCMINI)
@@ -87,7 +92,12 @@ enum
 #define ISPRIMO1		(BoxModel==BOX_PRIMO1)
 #define ISPRIMO2		(BoxModel==BOX_PRIMO2)
 #define ISPREDATOR		(BoxModel==BOX_PREDATOR)
-
+#define ISPRIMOSE		(BoxModel==BOX_PRIMOSE)
+#define ISGEN3                  (BoxModel==BOX_GEN3)
+#define ISRX2                   (BoxModel==BOX_RX2)
+#define ISSINP80                (BoxModel==BOX_SINP80)
+#define ISSINFJ200              (BoxModel==BOX_SINFJ200)
+#define ISINVOKE                (BoxModel==BOX_INVOKE)
 
 //=========================================================================
 // Global flags bitfield
@@ -133,23 +143,23 @@ typedef struct
 
 /* 00000001 */	int edit_value:1;
 /* 00000002 */	int new_rez_tcr:1;
-/* 00000004 */	int unused34:1;
+/* 00000004 */	int nbcr:1;
 /* 00000008 */	int bad_cell:1;
 /* 00000010 */	int edit_capture_evt:1;
 /* 00000020 */	int osc_1hz:1;
 /* 00000040 */	int unused38:1;
 /* 00000080 */	int batt_unk:1;
 
-/* 00000100 */	int	tick_1hz:1;
-/* 00000200 */	int	playing_fb:1;
+/* 00000100 */	int tick_1hz:1;
+/* 00000200 */	int playing_fb:1;
 /* 00000400 */	int has_x32:1;
-/* 00000800 */	int unused43:1;
-/* 00001000 */	int debug:1;
+/* 00000800 */	int asleep:1;       //not used too
+/* 00001000 */	int debug:1;        //not used
 /* 00002000 */	int noclock:1;
 /* 00004000 */	int read_bir:1;
 /* 00008000 */	int monitoring:1;
 
-/* 00010000 */	int unused48:1; //anim3d:1;  //bit 48
+/* 00010000 */	int screen_on:1; //bit 48
 /* 00020000 */	int pwm_pll:1;
 /* 00040000 */	int rtcinit:1;
 /* 00080000 */	int light_sleep:1;
@@ -157,7 +167,9 @@ typedef struct
 /* 00200000 */	int fading:1;
 /* 00400000 */	int led_on:1;
 /* 00800000 */	int splash:1;
-/* 01000000 */	int	playing_tt:1;
+/* 01000000 */	int playing_tt:1;
+/* 02000000 */	int soft_charge:1;
+/* 04000000 */	int inverse:1;
 }
 
 gFlags_t;
@@ -184,7 +196,7 @@ extern void DrawHexLong( int x, int y, int v, int font );
 extern uint32_t sqrtul( uint32_t v );
 extern uint32_t GetFirmwareSize();
 
-extern const uint8_t  MaxBoardTemp;
+//extern const uint8_t  MaxBoardTemp;
 
 //=========================================================================
 #endif /* __MYEVIC_H__ */

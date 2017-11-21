@@ -25,6 +25,7 @@ uint16_t	AutoPuffTimer;
 uint16_t	FadeOutTimer;
 
 
+
 //=========================================================================
 //----- (00007CD4) --------------------------------------------------------
 __myevic__ void InitTimers()
@@ -180,7 +181,8 @@ __myevic__ void TimedItems()
 		if ( !PD1 && ( BattProbeCount >= 2 ) && ( BattProbeCount < 50 ) && ( NumBatteries == 1 ) )
 			++BattProbeCount;
 	}
-	else if ( !ISCUBOID && !ISCUBO200 && !ISRX200S && !ISRX23 && !ISRX300 && !ISPRIMO1 && !ISPRIMO2 && !ISPREDATOR )
+	else if ( !ISCUBOID && !ISCUBO200 && !ISRX200S && !ISRX23 && !ISRX300 && !ISPRIMO1 
+                && !ISPRIMO2 && !ISPREDATOR && !ISGEN3 && !ISINVOKE && !ISRX2 )
 	{
 		if ( !PD7 && ( BattProbeCount >= 2 ) && ( BattProbeCount < 50 ) )
 			++BattProbeCount;
@@ -269,6 +271,7 @@ __myevic__ void TimedItems()
 	{
 		--FadeOutTimer;
                 
+                //flags?
                 if ( Screen == 60 || Screen == 5 ) dfc = dfContrast2;
                 else dfc = dfContrast; 
 
@@ -280,7 +283,15 @@ __myevic__ void TimedItems()
 
 	if ( PreheatDelay )
 	{
-		--PreheatDelay;
+		if ( --PreheatDelay )
+                {
+                    NextPreheatTimer = (100 - (PreheatDelay / dfPHDelay) ) * dfPreheatTime / 100;
+                }
+                else
+                {
+                    NextPreheatTimer = dfPreheatTime;
+                }
+                
 		if ( ( Screen == 1 ) && !( PreheatDelay % 25 ) )
 		{
 			gFlags.refresh_display = 1;
