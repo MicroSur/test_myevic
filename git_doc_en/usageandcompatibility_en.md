@@ -22,7 +22,8 @@
   * Reuleaux RX2/3
   * Reuleaux RXmini
   * Reuleaux RX300
-  * Predator 228W 
+  * Predator (SINUOUS) 228W 
+  * Reuleaux RX Gen3
 
 * Others
   * Vaponaute La Petite Box
