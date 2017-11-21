@@ -53,4 +53,4 @@ Brief introduction to the new features.
   
   -----
 
-← Previous page: [Supported devices and firmware installation] (usageandcompatibility_en.md) - Next page: [Profiles] (profiles_en.md) →
+← Previous page: [Supported devices and firmware installation](usageandcompatibility_en.md) - Next page: [Profiles](profiles_en.md) →
