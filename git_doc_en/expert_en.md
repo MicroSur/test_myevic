@@ -1,74 +1,97 @@
-### Expert
+### Expert Menu
 
-Some advanced options.  
-Normal users should barely have anything to do with those options, and can live perfectly well without ever knowing they exist. 
-I do not recommend "testing" those options just to "see what it does". Deny responsability of everything etc. 
-You're supposed to have 18+, after all^^
+Settings that require understanding of what, why and when they need to change. 
+Be responsible for the consequences only to yourself.
+The designation of icons in this menu: 
 
-  * __USB__
+* __BVO__
 
-        Choose between several USB modes:
-     * HID: Normal operation mode - factory setting.
-       HID is always active. This feature permits communication between the box and firmware utilities.
+Menu battery voltage. 
+It is recommended to calibrate the readings before using fashion software charge control (all the many battery mods and Pico 25).
 
-     * COM: A virtual COM interface; mainly used for debugging with a COM terminal such as putty.
-       May be usefull if you are developping your own version of the firmware.
+Depending on the fashion model and the characteristics of the scheme, measured mod the voltage of batteries may differ from the actual.
+This can lead to incorrect results when working: 
+ - mod can ahead of time to block the guy, when the battery still has a charge;
+- can be retriggered during the actual drawdown of the batteries (odnobatareynogo fashion), without knowing the exact condition of the battery;
+- can try to continue to charge the battery when it is fully charged (only in mod software charge control);
 
-  * __DBG__
-  
-    Enables or disables the debug informations mode. Once the DBG option is set to "ON", Debug informations can be shown/hidden by clicking fire button four times. This option is OFF by default to prevent users to inadvertendly mess up their screen. It's of no interest if you're not developping your own version of the firmware.
+Fully charge the batteries in an external charger. Using multimeter, perform measurements of stresses on banks. 
+Insert the batteries in the box and make adjustments if required. 
+ For mods with built in batteries is difficult to know their actual tension, without opening fashion.
+At the discharge accum, their testimonies may float relative to each other, there's nothing you can do about it.
 
-  * __X32__
+Limits of adjustment in each of the installed accum +-1.00 Volts with a step of 10 mV. 
 
-    Enables or disables usage of the X32 crystal of the PCB.  
-    If this setting is "OFF", the firmware won't try to drive the Real-Time Clock with the 32.768kHz crystal. This may solve freezing issues on some malfunctionning boxes. This setting will be active at next reset.  
-    After reset, if the box cannot use the X32 to drive the RTC, this option will be set back to "OFF" and the Light Sleep feature will be enabled (see "LSL" below).  
-    *This option is useless and forced to "OFF" on boxes known not to have an X32 crystal. Those are all boxes for which the manufacturer did not enable the RTC feature, i.e: VTC-Mini, Cuboid/Mini, Presa 75W and RX series.*  
+* __X32__
 
-  * __LSL__
-  
-    Light Sleep mode.  
-    *This setting is useless and forced to "OFF" on boxes with a X32 crystal (VTwo/Dual, AIO, Basic, eGrip II), and defaults to "ON" on other boxes.*  
-    On boxes where the Real-Time Clock is emulated (like the VTC-Mini), by setting the Light Sleep mode "ON", the box continues to drive the Real-Time Clock with the external 12.000MHz Crystal instead of the internal LIRC oscillator when entering sleep mode. This makes the Clock far more accurate and eliminates the need for the Clock Speed ratio, at the cost of a greater battery consumption (estimated less than 50 mAh/day).  
-    Using this setting, Clock accuracy is identical to those of real RTC boxes.
+He's LXT, 32768 Hz oscillator.
+To enable or disable support for this exact generator. 
+For some pukavik boxes with hardware clock shutdown this generator saved from the Frisians. 
+ If the box cannot use this crystal for real time clock, this setting will turn off and mode Light sleep (LSL). 
+*This option is useless and off if the box is physically absent this generator.* 
 
-  * __SHR__
-  
-    Shunt Resistance (in mΩ). (real resistance in Ohm now)
-    *Warning: This item is dangerous to your box. Messing with this parameter may cause overcurrent in the atomizer circuitry and lead to definitive box failure.*  
-    This item let you edit the value of the Atomizer's circuit shunt resistance. This resistance is involved in every resistance/current/power measures and computation in the whole firmware. This value should only be changed if you know exactly what you are doing.  
-    To reset the shunt value, select the SHR menu item and press the fire button during 2 seconds. This will revert the value to the default hardware setting.
+* __LSL__
 
-  * __UCH__
+Mode light sleep. 
+*This mode is useless and is off by default, if the box has support for X32 generator. And is enabled by default, if no support.* 
+ In this mode, the real time clock will always be fairly accurate HIRC oscillator ( 12 MHz ) is not accurate internal oscillator LIRC (10 kHz), not in sleep mod or not. 
+Adjusts the rate of the clock (Speed) this mode is not required. But the consumption will grow by about 50 mAh per day. 
+The precision in this mode is comparable to the accuracy in the boxes with embedded clock (LXT generator). But the clock reset when removing the batteries as there is no backup power on the Board.
 
-    USB Battery Charging.  
-    *Multi-cell boxes only. This option has no effect on single-cell boxes.*  
-    Enables or disables battery charging via the USB port. The USB port is still usable for all other purposes: firmware management, debugging, etc.  
-    If you have an external battery charger and want to take care of your batteries, it is recommended to switch off the USB charging feature to avoid potentialy unbalanced charges, or unadapted charge currents at end of charge.
+* __SHR__
 
-  * __BAT__
+Adjustment of shunt 
+ *Warning: Improper installation of the item means for the life of your box. Can cause excess current through the atomizer and fading. 
+The shunt is used in the circuit to calculate (via the voltage) of current, resistance and power the atomizer. 
+The program indicates the resistance of the shunt and in this paragraph you can change it. This makes for a more precise fit of the calculated resistance of the atomizer.
+Readings on the screen at the same time - current resistance of the atomizer. Do not change this parameter strongly and only when absolutely necessary. 
+ To reset the shunt default for this mod is a long holding the start button (2s).
 
-    Battery model.  
-    You can specify your battery brand and model among several ones: 25R, 30Q, HG2, HE4, VTC4, VTC5 and VTC6. "GEN" is the generic battery used by default and should be used for any other model of battery or for built-in battery.  
+* __UCH__
 
-    Custom Battery:  
-    By pressing the Fire button during two seconds while editing this option, the battery model changes to "CUS" (Custom Battery). The box will use the user-defined battery discharge curve and settings.
-    At the moment, battery model information is used by the firmware to compute a more accurate state-of-charge than the generic setting, and to avoid battery stress by limiting max Amp draw. Max Amps by battery model is based on Mooch's stress tests and are fairly reliable.  
+Charging via USB. 
+*Only for mnogoserijnyj mods and Pico 25.* 
+Enables/disables the possibility of charging fashion USB.
+Odnobatareynogo fashion are separate from the General pattern of exercises on the Board and not allow her the control. 
+USB continues to work in normal mode for flashing, monitoring, etc. 
+Recommended adjustment BVO before charging fashion USB. 
 
-    *On boxes with built-in battery (AIO, Basic, eGrip II, Cuboid Mini), this option should be kept on the "GEN" setting unless you've taken your box apart and manualy replaced the internal battery pack by something else.*  
+* __BAT__
 
-  * __BVO__
+Model battery (battery profile). 
+ The firmware converts the battery voltage into a percentage. For how this is done and meets this setting.
+There are several predefined types of conversion for different batteries: 25R, 30Q, HG2, HE4, VTC4, VTC5, VTC6. They are more accurate than GEN and to set the current limit for each (according to the test results Mooch).
+"GEN" is a universal battery, the default from the manufacturer fashion. Use it in the pits with built-in accum.
 
-    Battery Voltage Offset submenu  
-    Corrective offset value of the battery voltage. Depending on your box, the displayed battery voltage may be off by a few tens of millivolts. It's usually not a concern, but it may make the box locking the vape too early (wasting some battery capacity) or too late (box resets due to low voltage when firing).  
-    Use an external accurate voltmeter (your battery charger may do the job) to compare the displayed voltages on the box to the actual battery voltages, then adjust the displayed voltages with this item.  
-    Range is -1.00 to +1.00 Volts by step of 10mV.  
-    * On a single-cell box, only the first setting (B1) is significant. B2 and B3 are ignored.  
-    * On a fixed dual-cells box, the two first settings (B1 & B2) are used, respectively, for the first and the second battery (depending on the box, you'll have to determine wich one wich with your voltmeter). B3 is ignored.  
-    * On a mixed single/dual-cells box, B1 is used for the lone battery in single-cell setting, and B2 & B3 for the two cells in a dual-cell setting.  
-    * On a triple-cell box, B4 is ignored.  
-    * On a quad-cell box, I let you guess.  
+Custom battery (CUS): 
+ It's a special battery, the values of conversion for which you can change directly into fashion, the menu CUS. By default, the indications of interest correspond to level of battery while hovering about 30 Watts. 
+
+
+* __USB__
+
+The default mode HID this is the main mode and always works, for PC communication, firmware or monitoring.
+An additional mode for USB COM. The interface creates a virtual COM port to use a terminal program on a PC, mainly for testing purposes of the programmer.
+
+* __Temp__
+
+ Allows you to adjust the readings of the internal temperature sensor boards closer to the real.
+Let fashion sleep (cool down) around the home thermometer temperature in the room. Then quickly set this value on fashion.
+
+* __CUS__
+
+Change menu of the translation table of the voltage of the battery (always used the ACC with the lowest voltage) to the indications in percent for the custom batteries.
+The default corresponds to the current readings of the battery 18650 at the soaring to 30 Watts. In this case the interest will be more realistically reflect the capability of the battery at this capacity.
+ 0% and 100% immutable, they must be the same always. Other interest and all voltages can be changed in the direction of increasing from the previous value.
+After checking the validity table will be written into the nonvolatile parameters memory (dataflash).
+
+* __MAX__
+
+This menu allows you to set the maximum allowable values for:
+- power to the atomizer
+- the voltage at the atomizer
+- charging current for USB (for mods where the management charge is)
+- PCB temperature
 
 -----
 
-← Previous Page: [Interface](interface_en.md) 
+← Previous page: [interface Menu](interface_en.md) -- the Following page: [How to compile](howtobuild_en.md)→
