@@ -94,4 +94,4 @@ This menu allows you to set the maximum allowable values for:
 
 -----
 
-← Previous page: [interface Menu](interface_en.md) -- the Following page: [How to compile](howtobuild_en.md)→
+← Previous page: [interface Menu](interface_en.md) -- Next page: [How to compile](howtobuild_en.md)→
