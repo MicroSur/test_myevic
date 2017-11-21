@@ -1,47 +1,47 @@
-### __Coils__
+### __Spiral Menu (Coils) __
 
-* __Management__
+* __Correction of resistances (Manage) __
 
-  ![](http://i345.photobucket.com/albums/p374/ClockSelect/eVic/coils_zpsn29ef1h5.png)
+  ![](http://i345.photobucket.com/albums/p374/ClockSelect/eVic/coils_zpsn29ef1h5.png)
 
-* __On each line of the four TC modes:__
+* __Four lines for each type of thermal control: __
 
-  Click fire to toggle edit mode on the resistance.  
-  While the resistance value is highlighted, click (+) and (-) to edit its value.  
-  If you click fire again without editing the resistance value, this will toggle its locked/unlocked status.  
-  Editing the resistance to any non-zero value automaticaly locks it.  
-  Setting the resistance to zero with (-) will unlock and reset it.  
-               
-  You may also fire two seconds on one of the four resistances to reset its value; if the selected resistance corresponds to the current vaping mode, this will force an immediate reading of the atomizer, setting and lock of the new value.  
------              
-When entering the Coils Management menu, the resistance corresponfing to the current vaping mode (if applicable) will be pre-selected.
+  When you enter this menu, the line for the current thermal monitoring mode (if selected) will be selected.
+  After selecting the desired line, click Start to enter the resistance editing mode.
+  Correct the resistance with the buttons (+ -).
+  Clicking on Start without editing will change the status of the lock of the coil (lock).
+  Editing non-zero resistance will automatically lock it.
+  Long press on Start will re-read the resistance of the coil again.
 
-* __Zero All__
+* __Disposing (Zero All) __
 
-  Zeroes all resistances; also zeroes all "SMART" and "POWER" modes saved resistance settings.
+  Clearing of all the resistances remembered by the mod, including the Smart and Varivatt modes.
 
-* __Check: Yes/No__
+* __Temperature Control (TCR) __
 
-  If you feel you need to use this feature in any other situation than a really heavy build with low TCR value (SS and such), you surely have an issue with your coil. Using this feature may be risky and therefore is not recommended. Check your build first.*  
+  ! [] (https://www.dropbox.com/s/n09iy9nu57jnv18/tcrset.png?dl=1)
+        
+   In addition to the three customizable TC modes (M1, M2, M3), you can set fixed values ​​for the other modes (TEMP NI, TI, SS). For this:
+   * Select the mode to unlock,
+   * Long press the Start button to unlock this item. A suitable value will appear on the screen, you can edit it.
+   * Repeated long press Start will return the default setting, if necessary.
 
-  In TC modes, the box checks for suitability of the resistance the first time it is fired (i.e. each time the atomizer in screwed on or after box reset). The test is done in a way that can make heavy builds with low TCR value fail the test (really heavy, like dual twisted clapton or such; more than around 1.7 grams of metal). If a coil fails the first fire test, the box will enforce the power mode.  
-  If you know your heavy build is well done and suitable for temp control, you may set this option to "No". The box will bypass the first fire test and let you vape in the selected temp control mode.  
+* __Profiles (Profile) __
 
-    __Keeping the coil test disabled may get you into unpleasant situations. Use wisely.__
+   [Profile Menu] (profiles_en.md)
 
-* __TCR Submenu__
+* __Basic temperature (Cold) __
 
-  ![](https://www.dropbox.com/s/n09iy9nu57jnv18/tcrset.png?dl=1)  
+  The default is 20 degrees Celsius. Mod believes that this is the minimum temperature at which the user blocks the resistance for the TC. This value is involved in calculating the temperature of the spiral.
 
-        
-  *This menu is also accessible by switching off the box and pressing both Fire and Right regulatory button (+) for 5 seconds.*  
-        
-   In addition to the three usual TCR modes (M1, M2 & M3), the box standard presets for TEMP NI, TI and SS are editable. To edit one of the three preset modes:
-   * Select the mode you want to edit,
-   * Long fire to unlock the default (DEF) behavior; a reasonable value is proposed as a default starting value for edition,
-   * Edit the TCR value.
-   * Long fire to restore the default (DEF) behavior if needed.
+* __New Coil? (New) __
+
+  If the resistance in the TC is not blocked, the mod can determine that another tank is installed, if its resistance is different by this predetermined percentage. The default is 5%.
+
+* __ Compatibility check (Check: Yes / No) __
+
+  Mode checks the spiral for the possibility of working with thermal control. "Heavy" coils can not pass the test on the TC (the mod switches to the varivatt mode), although they can work in this mode. This check mark can cancel this check.
 
 -----
 
-← Previous Page: [Screen Menu](screen_en.md) --  Next Page: [Vaping Menu](vaping_en.md)→
+← Previous page: [Screen menu] (screen_en.md) - Next page: [Vape menu] (vaping_en.md) →
