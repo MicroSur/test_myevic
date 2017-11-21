@@ -49,4 +49,4 @@ For this:
 
 -----
 
-← Previous page: [Screen menu] (screen_en.md) - Next page: [Vape menu] (vaping_en.md) →
+← Previous page: [Screen menu](screen_en.md) - Next page: [Vape menu](vaping_en.md) →
