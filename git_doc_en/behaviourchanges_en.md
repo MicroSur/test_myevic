@@ -1,38 +1,56 @@
-### Changes in behavior ###
-Some changes has been made to the overall behavior of the firmware from the original. This paragraph may be read by any new user not to think something is a "bug".
+### Additional Features ###
+Brief introduction to the new features.
 
-* Stealth mode:  
-  The stealth mode has been extended to some more screens.  
-  The battery charging screen does no longer show up in stealth mode; only for a few seconds when plugging in the USB cable, just to show it's been correctly plugged.  
-  The Key Lock/UnLock screen reverts to black screen if keys are locked.  
-  The Stealth On/Off screen goes to black when setting stealth On.
+* The reaction time for buttons combo is shortened.
 
-* Right (+) and Left (-) buttons:  
-  While editing some values, the speed of change has been made more progressive before reaching the insane terminal velocity.  
-  Pressing those buttons does no longer wake up the box from screen saving, except if configured to do so in the Interface menu (see below). This makes the box more pocket-proof.
+* Stealth mode:
 
-* Temperature setting in TEMP mode:  
-  The temperature no longer wraps-around by switching between °C and °F; the temperature unit has to be chosen once and for all in the Interface menu. Default is °C.  
-  The temperature setting can vary by +/1 °C or +/-5 °F when edited if configured to do so in the Interface menu (see below).
+  In addition to floating with an extinguished screen:
+  
+  The charging screen is not shown continuously, only briefly when the USB cable is connected.
+  
+  The screen is extinguished when the plus or minus button lock is turned on.
+  
+  The screen is extinguished when the Stealth mode is activated.
 
-* Fire button Multi-Clicks:  
-  Clicking rapidly 2, 3 or 4 times on the fire button may now have some effect - see below in the Interface menu description to see those effects and how to set (or unset) them up.  
-  Clicking 10 times for board temperature, or 20 times for version screen does no longer require to switch off the box.  
+  Additional stealth mode Contrast, in steaming mode, the screen uses the second brightness setting. It is recommended to set it to     zero.
 
-* Coils memory:  
-  In POWER mode, the box now reminds of the power setting for any given resistance, up to 10 different (just like in SMART mode). Thus, when swapping between your tanks, the box will automatically set up the power setting you previously entered for that particular coil.  
-  Coils may vary by +/-10% in resistance to still be recognized, and two different coils within 10% won't be distinguished.
-  The coils memory can be erased in the Coils >> Manage >> Zero All menu item (see below).
+* Buttons (+) and Minus (-):
 
-* Bypass mode:  
-  Power is now displayed on top of screen instead of voltage, as it's a more relevant information regarding vaping quality. Real-time output voltage information is still available as a third-line option (VOUT).  
-  Predicted power and voltage are also more accurate, especially on multi-cells boxes. It needs a few puffs to reach max accuracy, time for the box to estimate battery behavior under high load.
+  Smoother increase in the speed of scrolling when editing values ​​on the screen.
+  
+  There is an option (Interface / Wake <>), so that the mod does not wake up by pressing these buttons.
+  
 
-* Logo:  
-  The myevic firmware accepts logos sizes of 64 pixels wide and from 40 to 63 lines high. Tall logo may partially recover lines of information in the center of the screen; it's up to you to choose the correct design and dimensions so that the display looks fine.
+* Temperature in thermal control mode:
 
-* Menus:  
-  Menus accessed by pressing Fire and Right button have been completely revamped. See below for new menus description.
------
+  When setting the temperature, the temperature measurement system (° C / ° F) does not change. The system is installed in the Interface menu. 
+  
+  The default is degrees Celsius ° C.
+  
+  The temperature change can be adjusted one degree (the default is five). Setting (Interface / 1C5F).
 
-← Previous Page: [Usage and Compatibility](usageandcompatibility_en.md) --  Next Page: [How To Build](howtobuild_en.md)→
+* Setting actions to repeatedly press the button Start (Fire):
+
+  In the menu (Interface / Clicks), you can override the behavior of the mod for the number of short-term presses (2 to 5 times) from the list.
+  
+  Any number of pressures over five - turn on / off the mod.
+
+* Bypass mode:
+
+  A more accurate calculation taking into account the possibility of battery (s).
+  
+  This requires a couple of puffs - the program determines the capabilities of batteries.
+
+* Clock:
+
+  The ability to use watches in mods where there is no hardware support. There is no precision, but there is.
+
+* Menu:
+
+  The menu system is extended to adjust almost any parameter. The motto is everything is set up on the box itself.
+  
+  
+  -----
+
+← Previous page: [Supported devices and firmware installation](usageandcompatibility_en.md) - Next page: [Profiles](profiles_en.md) →

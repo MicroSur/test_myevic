@@ -31,13 +31,16 @@
     The Clicks submenu allows you to configure the action associated to a Fire button multi-clic. Configurable multi-clicks are double, triple and quadruple clicks.
 
     Possible actions are:
-        * Nothing
-        * Enter edit mode
-        * Toggle display of info lines / clock on the main display
-        * Toggle the "Priority Power" mode (basically, switches temperature and power on the main screen display in TC mode, see above "PPwr On/Off" doc), *OR* enters the Preheat menu if box is in POWER mode.
-        * Switch to next vaping mode ( TC -> POWER -> BYPASS -> ... )
-        * Switch box On or Off
-        * Cycle through configuration profiles
+* None - do not do anything. 
+* Edit - the mode of entering the editing indications on the main screen (3 clicks in the firmware from the manufacturer). 
+* Clock - forced display of the clock as a logo on the main screen. 
+* PPwr, power priority. - in the TK: the temperature and power readings on the screen change places. For convenient adjustment of the one and the other with the buttons (+ -). - in the varivatt mode - the pre-heating pre-setting screen is called up. 
+* Mode - to switch to the next hover mode (TC -> Varivatt -> Bypass -> Smart ...). 
+* On / Off - on / off the box. (5 clicks in the firmware from the manufacturer) 
+* Profile - go to the profile selection screen with individual settings. 
+* Tetris - challenge the game Tetris. 
+* Flappy - challenge the game of drunk Birdie. 
+* Saver - show screen saver.
 
     As a security feature, if none of the action are configured to be the "Edit" mode, the firmware will redefine the triple click action to "Edit" at next reset.
 
